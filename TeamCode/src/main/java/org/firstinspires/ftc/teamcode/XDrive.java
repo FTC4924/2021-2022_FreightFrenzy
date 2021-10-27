@@ -5,6 +5,7 @@ import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -26,6 +27,9 @@ public class XDrive extends OpMode {
     private DcMotor rightFront;
     private DcMotor rightBack;
 
+    //Servos
+    private Servo duckServo;
+
     //Creating the variables for the gyro sensor
     private BNO055IMU imu;
 
@@ -34,6 +38,9 @@ public class XDrive extends OpMode {
     private double currentRobotAngle;
     private double targetAngle;
     private double robotAngleError;
+
+    private boolean xPressed;
+    private boolean duckOn;
 
     public void init() {
 
@@ -46,6 +53,8 @@ public class XDrive extends OpMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
+
+        duckServo = hardwareMap.get(Servo.class, "duckServo");
 
         //Initializing the Revhub IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -60,7 +69,7 @@ public class XDrive extends OpMode {
         angles = null;
         currentRobotAngle = 0.0;
         targetAngle = 0.0;
-
+        angleOffset = 0.0;
     }
 
     public void loop() {
@@ -70,6 +79,8 @@ public class XDrive extends OpMode {
         recalibrateGyro();
 
         holonomicDrive();
+
+        ducks();
 
     }
 
@@ -125,10 +136,11 @@ public class XDrive extends OpMode {
 
             /*Uses the Y of the right stick to determine the speed of the robot's movement with 0
             being 0.5 power*/
-            leftFrontPower *= Math.sqrt(Math.pow(gamepad1LeftStickX,2)+Math.pow(gamepad1LeftStickY,2));
-            leftBackPower *= Math.sqrt(Math.pow(gamepad1LeftStickX,2)+Math.pow(gamepad1LeftStickY,2));
-            rightFrontPower *= Math.sqrt(Math.pow(gamepad1LeftStickX,2)+Math.pow(gamepad1LeftStickY,2));
-            rightBackPower *= Math.sqrt(Math.pow(gamepad1LeftStickX,2)+Math.pow(gamepad1LeftStickY,2));
+            double rightYPower = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
+            leftFrontPower *= rightYPower;
+            leftBackPower *= rightYPower;
+            rightFrontPower *= rightYPower;
+            rightBackPower *= rightYPower;
 
         } else {
 
@@ -164,5 +176,22 @@ public class XDrive extends OpMode {
         rightFront.setPower(rightFrontPower);
         rightBack.setPower(rightBackPower);
 
+    }
+
+    private void ducks() {
+        if (gamepad1.x) {
+            if (!xPressed) {
+                xPressed = true;
+                duckOn = !duckOn;
+            }
+        } else {
+            xPressed = false;
+        }
+
+        if (duckOn) {
+            duckServo.setPosition(1.0);
+        } else {
+            duckServo.setPosition(0.5);
+        }
     }
 }
