@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -107,29 +108,10 @@ public abstract class AutoBase extends OpMode {
         count = 0;
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
-        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftFront.setTargetPosition(0);
-        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
-        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftBack.setTargetPosition(0);
-        leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        //leftBack.setDirection(DcMotorSimple.Direction.REVERSE);
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
-        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightFront.setTargetPosition(0);
-        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
         rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightBack.setTargetPosition(0);
-        rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        targetPosition = 0.0;
-        leftFrontTargetPosition = 0.0;
-        leftBackTargetPosition = 0.0;
-        rightFrontTargetPosition = 0.0;
-        rightBackTargetPosition = 0.0;
 
         leftFrontPower = 0;
         leftBackPower = 0;
@@ -149,7 +131,7 @@ public abstract class AutoBase extends OpMode {
         targetAngle = 0.0;
         angleError = 0.0;
 
-        robotFromCamera = OpenGLMatrix
+        /*robotFromCamera = OpenGLMatrix
                 .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
                 .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, RADIANS, CAMERA_X_ROTATE, CAMERA_Y_ROTATE, CAMERA_Z_ROTATE));
         lastLocation = null;
@@ -174,7 +156,7 @@ public abstract class AutoBase extends OpMode {
         targetsUltimateGoal.activate();
 
         targetVisible = false;
-        distanceFromImage = 0.0;
+        distanceFromImage = 0.0;*/
     }
 
     public void start() {

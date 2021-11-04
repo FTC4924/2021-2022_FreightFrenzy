@@ -14,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
+import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER;
 
 @TeleOp(name="XDrive")
 public class XDrive extends OpMode {
@@ -26,9 +27,11 @@ public class XDrive extends OpMode {
     private DcMotor leftBack;
     private DcMotor rightFront;
     private DcMotor rightBack;
+    private DcMotor armMotor;
 
     //Servos
     private Servo duckServo;
+    private Servo bristleServo;
 
     //Creating the variables for the gyro sensor
     private BNO055IMU imu;
@@ -39,8 +42,14 @@ public class XDrive extends OpMode {
     private double targetAngle;
     private double robotAngleError;
 
+    private double duckAccelerate;
+
     private boolean xPressed;
+    private boolean aPressed;
+    private boolean bPressed;
     private boolean duckOn;
+    private boolean bristlesIn;
+    private boolean bristlesOut;
 
     public void init() {
 
@@ -53,8 +62,12 @@ public class XDrive extends OpMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
+        armMotor = hardwareMap.get(DcMotor.class, "armMotor");
+
+        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
+        bristleServo = hardwareMap.get(Servo.class, "bristleServo");
 
         //Initializing the Revhub IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -70,6 +83,7 @@ public class XDrive extends OpMode {
         currentRobotAngle = 0.0;
         targetAngle = 0.0;
         angleOffset = 0.0;
+        duckAccelerate = 0.1;
     }
 
     public void loop() {
@@ -81,6 +95,8 @@ public class XDrive extends OpMode {
         holonomicDrive();
 
         ducks();
+
+        arm();
 
     }
 
@@ -98,6 +114,7 @@ public class XDrive extends OpMode {
     private void recalibrateGyro() {
         if(gamepad1.b) {
             angleOffset = angles.firstAngle;
+            targetAngle = 0.0;
         }
     }
 
@@ -178,8 +195,11 @@ public class XDrive extends OpMode {
 
     }
 
+    /**
+     * Controls for the duck wheel.
+     */
     private void ducks() {
-        if (gamepad1.x) {
+        if (gamepad2.x) {
             if (!xPressed) {
                 xPressed = true;
                 duckOn = !duckOn;
@@ -189,9 +209,54 @@ public class XDrive extends OpMode {
         }
 
         if (duckOn) {
-            duckServo.setPosition(1.0);
+            duckServo.setPosition(DUCK_SPEED);
         } else {
             duckServo.setPosition(0.5);
+        }
+        telemetry.addData("Duck Accelerate", duckAccelerate);
+    }
+
+    /**
+     * Controls the arm.
+     */
+    private void arm() {
+        if (Math.abs(gamepad2.left_stick_y) >= CONTROLLER_TOLERANCE) {
+            armMotor.setPower(gamepad2.left_stick_y);
+        } else {
+            armMotor.setPower(0.0);
+        }
+
+        //Double toggle for the bristles
+        if (gamepad2.a) {
+            if (!aPressed) {
+                aPressed = true;
+                bristlesIn = !bristlesIn;
+                if (bristlesIn) {
+                    bristlesOut = false;
+                }
+            }
+        } else {
+            aPressed = false;
+        }
+        if (gamepad2.b) {
+            if (!bPressed) {
+                bPressed = true;
+                bristlesOut = !bristlesOut;
+                if (bristlesOut) {
+                    bristlesIn = false;
+                }
+            }
+        } else {
+            bPressed = false;
+        }
+
+        //Setting the bristles power
+        if (bristlesIn) {
+            bristleServo.setPosition(BRISTLES_POWER);
+        } else if (bristlesOut) {
+            bristleServo.setPosition(1 - BRISTLES_POWER);
+        } else {
+            bristleServo.setPosition(0.5);
         }
     }
 }

@@ -12,6 +12,9 @@ public class Constants {
     protected static final double ANGLE_ERROR_TOLERANCE = 0.05;
     protected static final double ENCODER_POSITION_TOLERANCE = 20.0;
 
+    protected static final double BRISTLES_POWER = 0.8;
+    protected static final double DUCK_SPEED = 0.35;
+
     protected enum AllianceColor {
 
         BLUE(1, -1 * Math.PI/2, 914.0),
