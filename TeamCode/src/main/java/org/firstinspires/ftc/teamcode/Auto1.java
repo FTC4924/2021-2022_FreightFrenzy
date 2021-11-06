@@ -18,7 +18,9 @@ public class Auto1 extends AutoBase{
     protected ArrayList<Command> getCommands() {
         return new ArrayList<>(
                 Arrays.asList(
-                        new Command(MOVE, AngleUnit.DEGREES, 5, 0.0, 0.2)
+                        //new Command(MOVE, AngleUnit.RADIANS, 1, -45.0, 0.2),
+                        new Command(MOVE, AngleUnit.DEGREES, 4.75, 90, 0.5),
+                        new Command(MOVE, AngleUnit.DEGREES, 1.34, 0, 0.5)
                 )
         );
     }

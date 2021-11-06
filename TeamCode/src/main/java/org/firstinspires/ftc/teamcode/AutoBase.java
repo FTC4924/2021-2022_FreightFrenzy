@@ -111,7 +111,6 @@ public abstract class AutoBase extends OpMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
-        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         leftFrontPower = 0;
         leftBackPower = 0;
@@ -226,7 +225,7 @@ public abstract class AutoBase extends OpMode {
         rightFrontPower *= currentCommand.power;
         rightBackPower *= currentCommand.power;
 
-        if (time > currentCommand.distance) {
+        if (time >= currentCommand.distance) {
 
             startNextCommand();
         }
@@ -326,6 +325,7 @@ public abstract class AutoBase extends OpMode {
         currentRobotAngle = angles.firstAngle + allianceColor.angleOffset;
         angleError = targetAngle - currentRobotAngle;
         angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
+        telemetry.addData("Angle Error", angleError);
     }
 
     /**
@@ -371,6 +371,8 @@ public abstract class AutoBase extends OpMode {
                 commandFirstLoop = true;
                 resetStartTime();
             }
+        } else {
+            requestOpModeStop();
         }
     }
 

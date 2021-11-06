@@ -45,9 +45,11 @@ public class XDrive extends OpMode {
     private double duckAccelerate;
 
     private boolean xPressed;
+    private boolean yPressed;
     private boolean aPressed;
     private boolean bPressed;
-    private boolean duckOn;
+    private boolean duckIn;
+    private boolean duckOut;
     private boolean bristlesIn;
     private boolean bristlesOut;
 
@@ -132,6 +134,7 @@ public class XDrive extends OpMode {
         double gamepad1RightStickY = gamepad1.right_stick_y;
         double gamepad1LeftTrigger = gamepad1.left_trigger;
         double gamepad1RightTrigger = gamepad1.right_trigger;
+        robotAngleError = 0;
 
         double leftFrontPower;
         double leftBackPower ;
@@ -169,18 +172,21 @@ public class XDrive extends OpMode {
         }
 
         if (gamepad1LeftTrigger >= CONTROLLER_TOLERANCE) {
-            targetAngle += Math.toRadians(gamepad1LeftTrigger * TURNING_ANGLE_POSITION_SCALAR);
+            //targetAngle += Math.toRadians(gamepad1LeftTrigger * TURNING_ANGLE_POSITION_SCALAR);
+
+            robotAngleError += gamepad1LeftTrigger;
         }
         if (gamepad1RightTrigger >= CONTROLLER_TOLERANCE) {
-            targetAngle -= Math.toRadians(gamepad1RightTrigger * TURNING_ANGLE_POSITION_SCALAR);
+            //targetAngle -= Math.toRadians(gamepad1RightTrigger * TURNING_ANGLE_POSITION_SCALAR);
+            robotAngleError -= gamepad1RightTrigger;
         }
 
         telemetry.addData("target angle", Math.toDegrees(targetAngle));
         dashboardTelemetry.addData("robotAngleError",robotAngleError);
         dashboardTelemetry.update();
 
-        robotAngleError = targetAngle - currentRobotAngle;
-        robotAngleError = ((((robotAngleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
+        //robotAngleError = targetAngle - currentRobotAngle;
+        //robotAngleError = ((((robotAngleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
 
         leftFrontPower += robotAngleError * TURNING_POWER_SCALAR;
         leftBackPower += robotAngleError * TURNING_POWER_SCALAR;
@@ -202,14 +208,25 @@ public class XDrive extends OpMode {
         if (gamepad2.x) {
             if (!xPressed) {
                 xPressed = true;
-                duckOn = !duckOn;
+                duckIn = !duckIn;
             }
         } else {
             xPressed = false;
         }
 
-        if (duckOn) {
+        if (gamepad2.y) {
+            if (!yPressed) {
+                yPressed = true;
+                duckOut = !duckOut;
+            }
+        } else {
+            yPressed = false;
+        }
+
+        if (duckIn) {
             duckServo.setPosition(DUCK_SPEED);
+        } else if (duckOut) {
+            duckServo.setPosition(1-DUCK_SPEED);
         } else {
             duckServo.setPosition(0.5);
         }

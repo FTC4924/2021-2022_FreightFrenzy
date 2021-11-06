@@ -17,17 +17,15 @@ public class Constants {
 
     protected enum AllianceColor {
 
-        BLUE(1, -1 * Math.PI/2, 914.0),
-        RED(-1, Math.PI/2, 300.0);
+        BLUE(1, 0),
+        RED(-1, 0);
 
         protected final int direction;
         protected final double angleOffset;
-        protected final double highGoalX;
 
-        AllianceColor(int direction, double angleOffset, double highGoalX) {
+        AllianceColor(int direction, double angleOffset) {
             this.direction = direction;
             this.angleOffset = angleOffset;
-            this.highGoalX = highGoalX;
         }
 
     }
