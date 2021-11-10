@@ -13,7 +13,7 @@ public class Constants {
     protected static final double ENCODER_POSITION_TOLERANCE = 20.0;
 
     protected static final double BRISTLES_POWER = 0.8;
-    protected static final double DUCK_SPEED = 0.35;
+    protected static final double DUCK_SPEED = 0.15;
 
     protected enum AllianceColor {
 
@@ -35,7 +35,8 @@ public class Constants {
         MOVE,
         TURN,
         WAIT,
-        DETECT_IMAGE
+        DETECT_IMAGE,
+        DUCKS
     }
 
     protected static final String VUFORIA_KEY = "AaeF/Hb/////AAABmXyUA/dvl08Hn6O8IUco1axEjiRtYCVASe" +

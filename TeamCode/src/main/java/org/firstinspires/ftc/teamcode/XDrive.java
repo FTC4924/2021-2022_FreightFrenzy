@@ -16,8 +16,10 @@ import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADI
 import static org.firstinspires.ftc.teamcode.Constants.*;
 import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER;
 
-@TeleOp(name="XDrive")
-public class XDrive extends OpMode {
+
+public abstract class XDrive extends OpMode {
+
+    protected static AllianceColor allianceColor;
 
     private FtcDashboard dashboard;
     private Telemetry dashboardTelemetry;
@@ -224,9 +226,7 @@ public class XDrive extends OpMode {
         }
 
         if (duckIn) {
-            duckServo.setPosition(DUCK_SPEED);
-        } else if (duckOut) {
-            duckServo.setPosition(1-DUCK_SPEED);
+            duckServo.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
         } else {
             duckServo.setPosition(0.5);
         }
@@ -276,4 +276,6 @@ public class XDrive extends OpMode {
             bristleServo.setPosition(0.5);
         }
     }
+
+    protected abstract AllianceColor getAllianceColor();
 }

@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -21,24 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YZX;
-import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static org.firstinspires.ftc.teamcode.Constants.ANGLE_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Constants.AllianceColor;
-import static org.firstinspires.ftc.teamcode.Constants.CAMERA_FORWARD_DISPLACEMENT;
-import static org.firstinspires.ftc.teamcode.Constants.CAMERA_LEFT_DISPLACEMENT;
-import static org.firstinspires.ftc.teamcode.Constants.CAMERA_VERTICAL_DISPLACEMENT;
-import static org.firstinspires.ftc.teamcode.Constants.CAMERA_X_ROTATE;
-import static org.firstinspires.ftc.teamcode.Constants.CAMERA_Y_ROTATE;
-import static org.firstinspires.ftc.teamcode.Constants.CAMERA_Z_ROTATE;
 import static org.firstinspires.ftc.teamcode.Constants.DEFAULT_DISTANCE_FROM_IMAGE;
-import static org.firstinspires.ftc.teamcode.Constants.ENCODER_POSITION_TOLERANCE;
-import static org.firstinspires.ftc.teamcode.Constants.HALF_FIELD_DISTANCE;
+import static org.firstinspires.ftc.teamcode.Constants.DUCK_SPEED;
 import static org.firstinspires.ftc.teamcode.Constants.IMAGE_DETECTION_COUNT;
-import static org.firstinspires.ftc.teamcode.Constants.TICKS_PER_FOOT;
 import static org.firstinspires.ftc.teamcode.Constants.TURNING_POWER_SCALAR;
 import static org.firstinspires.ftc.teamcode.Constants.TURNING_ENCODER_POSITION_SCALAR;
-import static org.firstinspires.ftc.teamcode.Constants.VUFORIA_KEY;
 
 
 /**
@@ -62,16 +49,18 @@ public abstract class AutoBase extends OpMode {
     private DcMotor rightFront;
     private DcMotor rightBack;
 
+    private Servo duckServo;
+
     private double targetPosition;
     private double leftFrontTargetPosition;
     private double leftBackTargetPosition;
     private double rightFrontTargetPosition;
     private double rightBackTargetPosition;
 
-    double leftFrontPower;
-    double leftBackPower;
-    double rightFrontPower;
-    double rightBackPower;
+    private double leftFrontPower;
+    private double leftBackPower;
+    private double rightFrontPower;
+    private double rightBackPower;
 
     private BNO055IMU imu;
     private Orientation angles;
@@ -96,6 +85,8 @@ public abstract class AutoBase extends OpMode {
     private boolean targetVisible;
     private double distanceFromImage;
 
+    private boolean ducksOn;
+
     public void init() {
         allianceColor = getAllianceColor();
         currentCommands = getCommands();
@@ -111,6 +102,8 @@ public abstract class AutoBase extends OpMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
+
+        duckServo = hardwareMap.get(Servo.class, "duckServo");
 
         leftFrontPower = 0;
         leftBackPower = 0;
@@ -181,11 +174,26 @@ public abstract class AutoBase extends OpMode {
             case WAIT:
                 pause();
                 break;
+
+            case DUCKS:
+                ducks();
+                break;
         }
 
         gyroCorrection();
 
         setWheelPowersAndPositions();
+    }
+
+    /**
+     * Controls the duck wheel.
+     */
+    public void ducks() {
+        ducksOn = !ducksOn;
+        if (ducksOn) {
+            duckServo.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
+        }
+        startNextCommand();
     }
 
     /**
@@ -305,11 +313,6 @@ public abstract class AutoBase extends OpMode {
      * Sets the power and position of each wheel
      */
     private void setWheelPowersAndPositions() {
-        leftFront.setTargetPosition((int) Math.round(leftFrontTargetPosition));
-        leftBack.setTargetPosition((int) Math.round(leftBackTargetPosition));
-        rightFront.setTargetPosition((int) Math.round(rightFrontTargetPosition));
-        rightBack.setTargetPosition((int) Math.round(rightBackTargetPosition));
-
         leftFront.setPower(leftFrontPower);
         leftBack.setPower(leftBackPower);
         rightFront.setPower(rightFrontPower);
