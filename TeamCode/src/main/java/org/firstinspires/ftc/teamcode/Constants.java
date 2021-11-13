@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import org.opencv.core.Scalar;
+
 /**
  * Contains constants for all of the programs in one file for easy access.
  */
@@ -14,6 +16,14 @@ public class Constants {
 
     protected static final double BRISTLES_POWER = 0.8;
     protected static final double DUCK_SPEED = 0.15;
+
+    public enum RingNumber {
+
+        NONE,
+        ONE,
+        FOUR
+
+    }
 
     protected enum AllianceColor {
 
@@ -55,12 +65,13 @@ public class Constants {
     protected static final int IMAGE_DETECTION_COUNT = 20;
     protected static final double DEFAULT_DISTANCE_FROM_IMAGE = 208.0;
 
+    static final Scalar GREEN = new Scalar(0, 255, 0);
     protected static double REGION_WIDTH = 60;
     protected static double REGION_HEIGHT = 60;
     protected static int RESOLUTION_WIDTH = 1280;
 
     protected static final double TURNING_ANGLE_POSITION_SCALAR = 2.0;
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;
-    protected static final double TURNING_POWER_SCALAR = 2.0;
+    protected static final double TURNING_POWER_SCALAR = 2;
 
 }

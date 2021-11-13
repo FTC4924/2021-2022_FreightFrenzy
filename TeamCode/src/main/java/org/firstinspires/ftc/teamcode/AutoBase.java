@@ -103,7 +103,7 @@ public abstract class AutoBase extends OpMode {
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
 
-        duckServo = hardwareMap.get(Servo.class, "duckServo");
+         duckServo = hardwareMap.get(Servo.class, "duckServo");
 
         leftFrontPower = 0;
         leftBackPower = 0;
@@ -156,6 +156,11 @@ public abstract class AutoBase extends OpMode {
     }
 
     public void loop() {
+        leftFrontPower = 0;
+        leftBackPower = 0;
+        rightFrontPower = 0;
+        rightBackPower = 0;
+
         getAngleError();
 
         switch (currentCommand.commandType) {
@@ -192,6 +197,8 @@ public abstract class AutoBase extends OpMode {
         ducksOn = !ducksOn;
         if (ducksOn) {
             duckServo.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
+        } else {
+            duckServo.setPosition(.5);
         }
         startNextCommand();
     }
@@ -219,8 +226,8 @@ public abstract class AutoBase extends OpMode {
         }*/
 
 
-        /*Determines what power each wheel should get based on the angle we get from the stick
-        plus the current robot angle so that the controls are independent of what direction the
+        /*Determines what power each wheel should get based on the angle we get from the command
+        angle and the current robot angle so that the controls are independent of what direction the
         robot is facing*/
         leftFrontPower = Math.cos(currentCommand.angle + (Math.PI/4) - currentRobotAngle)*-1;
         leftBackPower = Math.sin(currentCommand.angle + (Math.PI/4) - currentRobotAngle)*-1;
@@ -298,10 +305,10 @@ public abstract class AutoBase extends OpMode {
      * Corrects the target positions and powers of the wheels based on the angle error.
      */
     private void gyroCorrection() {
-        leftFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
+        /*leftFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         leftBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         rightFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
-        rightBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
+        rightBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;*/
 
         leftFrontPower += angleError * TURNING_POWER_SCALAR;
         leftBackPower += angleError * TURNING_POWER_SCALAR;
