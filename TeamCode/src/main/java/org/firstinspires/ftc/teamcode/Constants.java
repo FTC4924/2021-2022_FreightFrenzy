@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
+import org.opencv.core.Size;
 
 /**
  * Contains constants for all of the programs in one file for easy access.
@@ -17,20 +20,20 @@ public class Constants {
     protected static final double BRISTLES_POWER = 0.8;
     protected static final double DUCK_SPEED = 0.15;
 
-    public enum RingNumber {
+    public enum BarcodePos {
 
-        NONE,
-        ONE,
-        FOUR
+        LEFT,
+        CENTER,
+        RIGHT
 
     }
 
-    protected enum AllianceColor {
+    public enum AllianceColor {
 
         BLUE(1, 0),
         RED(-1, 0);
 
-        protected final int direction;
+        public final int direction;
         protected final double angleOffset;
 
         AllianceColor(int direction, double angleOffset) {
@@ -40,7 +43,7 @@ public class Constants {
 
     }
 
-    protected enum CommandType {
+    public enum CommandType {
 
         MOVE,
         TURN,
@@ -66,8 +69,10 @@ public class Constants {
     protected static final double DEFAULT_DISTANCE_FROM_IMAGE = 208.0;
 
     static final Scalar GREEN = new Scalar(0, 255, 0);
-    protected static double REGION_WIDTH = 60;
-    protected static double REGION_HEIGHT = 60;
+    protected static Size REGION_SIZE = new Size(60, 60);
+    protected static Rect REGION_A = new Rect(new Point(10,245), REGION_SIZE);
+    protected static Rect REGION_B = new Rect(new Point(80,245), REGION_SIZE);
+    protected static Rect REGION_C = new Rect(new Point(150,245), REGION_SIZE);
     protected static int RESOLUTION_WIDTH = 1280;
 
     protected static final double TURNING_ANGLE_POSITION_SCALAR = 2.0;
