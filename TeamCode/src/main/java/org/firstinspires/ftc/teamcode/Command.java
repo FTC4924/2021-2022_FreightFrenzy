@@ -14,6 +14,8 @@ import static org.firstinspires.ftc.teamcode.Constants.CommandType;
 public class Command {
 
     public CommandType commandType;
+    public ArrayList<Command> redCommands;
+    public ArrayList<Command> blueCommands;
     public ArrayList<Command> noRingsCommands;
     public ArrayList<Command> oneRingCommands;
     public ArrayList<Command> fourRingsCommands;
@@ -56,6 +58,12 @@ public class Command {
         this.noRingsCommands = noRingsCommands;
         this.oneRingCommands = oneRingCommands;
         this.fourRingsCommands = fourRingsCommands;
+    }
+
+    public Command(CommandType commandType, ArrayList<Command> redCommands, ArrayList<Command> blueCommands) {
+        this.commandType = commandType;
+        this.redCommands = redCommands;
+        this.blueCommands = blueCommands;
     }
 
 }

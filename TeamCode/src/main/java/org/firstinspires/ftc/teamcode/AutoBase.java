@@ -14,6 +14,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +26,9 @@ import static org.firstinspires.ftc.teamcode.Constants.ANGLE_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Constants.AllianceColor;
 import static org.firstinspires.ftc.teamcode.Constants.DEFAULT_DISTANCE_FROM_IMAGE;
 import static org.firstinspires.ftc.teamcode.Constants.DUCK_SPEED;
+import static org.firstinspires.ftc.teamcode.Constants.ENCODER_POSITION_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Constants.IMAGE_DETECTION_COUNT;
+import static org.firstinspires.ftc.teamcode.Constants.TICKS_PER_FOOT;
 import static org.firstinspires.ftc.teamcode.Constants.TURNING_POWER_SCALAR;
 import static org.firstinspires.ftc.teamcode.Constants.TURNING_ENCODER_POSITION_SCALAR;
 
@@ -85,6 +90,8 @@ public abstract class AutoBase extends OpMode {
     private boolean targetVisible;
     private double distanceFromImage;
 
+    OpenCvWebcam webcam;
+
     private boolean ducksOn;
 
     public void init() {
@@ -99,11 +106,32 @@ public abstract class AutoBase extends OpMode {
         count = 0;
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
-        leftBack = hardwareMap.get(DcMotor.class, "leftBack");
-        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
-        rightBack = hardwareMap.get(DcMotor.class, "rightBack");
+        leftFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFront.setTargetPosition(0);
+        leftFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-         duckServo = hardwareMap.get(Servo.class, "duckServo");
+        leftBack = hardwareMap.get(DcMotor.class, "leftBack");
+        leftBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftBack.setTargetPosition(0);
+        leftBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        rightFront = hardwareMap.get(DcMotor.class, "rightFront");
+        rightFront.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFront.setTargetPosition(0);
+        rightFront.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        rightBack = hardwareMap.get(DcMotor.class, "rightBack");
+        rightBack.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBack.setTargetPosition(0);
+        rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        duckServo = hardwareMap.get(Servo.class, "duckServo");
+
+        targetPosition = 0.0;
+        leftFrontTargetPosition = 0.0;
+        leftBackTargetPosition = 0.0;
+        rightFrontTargetPosition = 0.0;
+        rightBackTargetPosition = 0.0;
 
         leftFrontPower = 0;
         leftBackPower = 0;
@@ -149,6 +177,13 @@ public abstract class AutoBase extends OpMode {
 
         targetVisible = false;
         distanceFromImage = 0.0;*/
+
+        /*int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+
+        webcam.setPipeline(new DuckDetectionPipeline());
+        webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener());*/
     }
 
     public void start() {
@@ -176,6 +211,10 @@ public abstract class AutoBase extends OpMode {
                 detectImage();
                 break;
 
+            case RED_BLUE:
+                redOrBlue();
+                break;
+
             case WAIT:
                 pause();
                 break;
@@ -183,11 +222,31 @@ public abstract class AutoBase extends OpMode {
             case DUCKS:
                 ducks();
                 break;
+
+            case NONE:
+                startNextCommand();
+                break;
         }
 
         gyroCorrection();
 
         setWheelPowersAndPositions();
+        telemetry.addData("leftFront", leftFrontTargetPosition);
+        telemetry.addData("leftBack", leftBackTargetPosition);
+        telemetry.addData("rightFront", rightFrontTargetPosition);
+        telemetry.addData("rightBack", rightBackTargetPosition);
+    }
+
+    private void redOrBlue() {
+        switch (allianceColor) {
+            case RED:
+                newCommands = currentCommand.redCommands;
+                break;
+            case BLUE:
+                newCommands = currentCommand.blueCommands;
+                break;
+        }
+        startNextCommand();
     }
 
     /**
@@ -207,10 +266,7 @@ public abstract class AutoBase extends OpMode {
      * Calculates the holonomic drive motor target encoder positions and sets the motor speeds.
      */
     public void holonomicDrive() {
-        /*Determines what encoder position each wheel should be based on the angle we get from the input
-        plus the current robot angle so that the controls are independent of what direction the
-        robot is facing*/
-        /*if (commandFirstLoop) {
+        if (commandFirstLoop) {
 
             targetPosition = currentCommand.distance * TICKS_PER_FOOT;
 
@@ -223,11 +279,10 @@ public abstract class AutoBase extends OpMode {
             rightBackTargetPosition += (leftTargetPositionCalculation);
 
             commandFirstLoop = false;
-        }*/
+        }
 
-
-        /*Determines what power each wheel should get based on the angle we get from the command
-        angle and the current robot angle so that the controls are independent of what direction the
+        /*Determines what power each wheel should get based on the angle we get from the stick
+        plus the current robot angle so that the controls are independent of what direction the
         robot is facing*/
         leftFrontPower = Math.cos(currentCommand.angle + (Math.PI/4) - currentRobotAngle)*-1;
         leftBackPower = Math.sin(currentCommand.angle + (Math.PI/4) - currentRobotAngle)*-1;
@@ -240,8 +295,10 @@ public abstract class AutoBase extends OpMode {
         rightFrontPower *= currentCommand.power;
         rightBackPower *= currentCommand.power;
 
-        if (time >= currentCommand.distance) {
-
+        if (Math.abs(leftFront.getCurrentPosition() - leftFrontTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(leftBack.getCurrentPosition() - leftBackTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(rightFront.getCurrentPosition() - rightFrontTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(rightBack.getCurrentPosition() - rightBackTargetPosition) <= ENCODER_POSITION_TOLERANCE) {
             startNextCommand();
         }
     }
@@ -305,10 +362,10 @@ public abstract class AutoBase extends OpMode {
      * Corrects the target positions and powers of the wheels based on the angle error.
      */
     private void gyroCorrection() {
-        /*leftFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
+        leftFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         leftBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         rightFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
-        rightBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;*/
+        rightBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
 
         leftFrontPower += angleError * TURNING_POWER_SCALAR;
         leftBackPower += angleError * TURNING_POWER_SCALAR;
@@ -320,6 +377,11 @@ public abstract class AutoBase extends OpMode {
      * Sets the power and position of each wheel
      */
     private void setWheelPowersAndPositions() {
+        leftFront.setTargetPosition((int) Math.round(leftFrontTargetPosition));
+        leftBack.setTargetPosition((int) Math.round(leftBackTargetPosition));
+        rightFront.setTargetPosition((int) Math.round(rightFrontTargetPosition));
+        rightBack.setTargetPosition((int) Math.round(rightBackTargetPosition));
+
         leftFront.setPower(leftFrontPower);
         leftBack.setPower(leftBackPower);
         rightFront.setPower(rightFrontPower);

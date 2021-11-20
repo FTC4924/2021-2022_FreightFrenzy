@@ -10,7 +10,7 @@ import org.opencv.core.Size;
  */
 
 public class Constants {
-    protected static final double TICKS_PER_FOOT = 6446.96;
+    protected static final double TICKS_PER_FOOT = 758.51;
     protected static final double HALF_FIELD_DISTANCE = 1828.8;
 
     protected static final double CONTROLLER_TOLERANCE = 0.05;
@@ -44,11 +44,12 @@ public class Constants {
     }
 
     public enum CommandType {
-
+        NONE,
         MOVE,
         TURN,
         WAIT,
         DETECT_IMAGE,
+        RED_BLUE,
         DUCKS
     }
 
