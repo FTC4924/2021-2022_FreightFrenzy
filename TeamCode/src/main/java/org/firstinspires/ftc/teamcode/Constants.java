@@ -18,7 +18,8 @@ public class Constants {
     protected static final double ENCODER_POSITION_TOLERANCE = 20.0;
 
     protected static final double BRISTLES_POWER = 0.8;
-    protected static final double DUCK_SPEED = 0.15;
+    protected static final double DUCK_SPEED = -0.15;
+    protected static final double AUTO_DUCK_SPEED = -.05;
 
     public enum BarcodePos {
 
@@ -78,6 +79,6 @@ public class Constants {
 
     protected static final double TURNING_ANGLE_POSITION_SCALAR = 2.0;
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;
-    protected static final double TURNING_POWER_SCALAR = 2;
+    protected static final double TURNING_POWER_SCALAR = 4;
 
 }

@@ -8,6 +8,6 @@ import org.firstinspires.ftc.teamcode.Constants.*;
 public class BlueAuto1 extends Auto1 {
     @Override
     protected AllianceColor getAllianceColor()  {
-        return AllianceColor.RED;
+        return AllianceColor.BLUE;
     }
 }

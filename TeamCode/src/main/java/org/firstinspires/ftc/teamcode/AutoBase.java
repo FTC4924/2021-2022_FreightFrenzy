@@ -16,6 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefau
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.ANGLE_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Constants.AUTO_DUCK_SPEED;
 import static org.firstinspires.ftc.teamcode.Constants.AllianceColor;
 import static org.firstinspires.ftc.teamcode.Constants.DEFAULT_DISTANCE_FROM_IMAGE;
 import static org.firstinspires.ftc.teamcode.Constants.DUCK_SPEED;
@@ -178,12 +180,24 @@ public abstract class AutoBase extends OpMode {
         targetVisible = false;
         distanceFromImage = 0.0;*/
 
-        /*int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
         webcam.setPipeline(new DuckDetectionPipeline());
-        webcam.setMillisecondsPermissionTimeout(2500); // Timeout for obtaining permission is configurable. Set before opening.
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener());*/
+        webcam.setMillisecondsPermissionTimeout(2500);
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+                webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+            }
+           
+            public void onError(int errorCode)
+            {
+                telemetry.speak("The web cam wasn't initialised correctly!");
+            }
+        });
     }
 
     public void start() {
@@ -255,7 +269,7 @@ public abstract class AutoBase extends OpMode {
     public void ducks() {
         ducksOn = !ducksOn;
         if (ducksOn) {
-            duckServo.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
+            duckServo.setPosition(0.5 + AUTO_DUCK_SPEED * allianceColor.direction);
         } else {
             duckServo.setPosition(.5);
         }
@@ -309,7 +323,7 @@ public abstract class AutoBase extends OpMode {
     private void turn() {
         if(commandFirstLoop) {
             commandFirstLoop = false;
-            targetAngle = currentCommand.angle;
+            targetAngle = currentCommand.angle * allianceColor.direction;
             angleError = targetAngle - currentRobotAngle;
             angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
         }
@@ -444,7 +458,8 @@ public abstract class AutoBase extends OpMode {
                 resetStartTime();
             }
         } else {
-            requestOpModeStop();
+            resetStartTime();
+            if(time > 1) requestOpModeStop();
         }
     }
 
