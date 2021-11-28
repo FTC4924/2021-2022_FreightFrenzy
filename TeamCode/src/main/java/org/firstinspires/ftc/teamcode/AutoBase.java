@@ -190,7 +190,7 @@ public abstract class AutoBase extends OpMode {
             @Override
             public void onOpened()
             {
-                webcam.startStreaming(320, 240, OpenCvCameraRotation.UPRIGHT);
+                webcam.startStreaming(800, 600, OpenCvCameraRotation.UPRIGHT);
             }
            
             public void onError(int errorCode)
