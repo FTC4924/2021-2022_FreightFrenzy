@@ -71,11 +71,12 @@ public class Constants {
     protected static final double DEFAULT_DISTANCE_FROM_IMAGE = 208.0;
 
     static final Scalar GREEN = new Scalar(0, 255, 0);
-    protected static Size REGION_SIZE = new Size(60, 60);
-    protected static Rect REGION_A = new Rect(new Point(30,245), REGION_SIZE);
-    protected static Rect REGION_B = new Rect(new Point(100,245), REGION_SIZE);
-    protected static Rect REGION_C = new Rect(new Point(170,245), REGION_SIZE);
-    protected static int RESOLUTION_WIDTH = 1280;
+    protected static Size REGION_SIZE = new Size(100, 100);
+    protected static Rect REGION_A = new Rect(new Point(50,245), REGION_SIZE);
+    protected static Rect REGION_B = new Rect(new Point(350,245), REGION_SIZE);
+    protected static Rect REGION_C = new Rect(new Point(650,245), REGION_SIZE);
+    protected static int RESOLUTION_WIDTH = 800;
+    protected static int RESOLUTION_HEIGHT = 600;
 
     protected static final double TURNING_ANGLE_POSITION_SCALAR = 2.0;
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;

@@ -30,6 +30,8 @@ import static org.firstinspires.ftc.teamcode.Constants.DEFAULT_DISTANCE_FROM_IMA
 import static org.firstinspires.ftc.teamcode.Constants.DUCK_SPEED;
 import static org.firstinspires.ftc.teamcode.Constants.ENCODER_POSITION_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Constants.IMAGE_DETECTION_COUNT;
+import static org.firstinspires.ftc.teamcode.Constants.RESOLUTION_HEIGHT;
+import static org.firstinspires.ftc.teamcode.Constants.RESOLUTION_WIDTH;
 import static org.firstinspires.ftc.teamcode.Constants.TICKS_PER_FOOT;
 import static org.firstinspires.ftc.teamcode.Constants.TURNING_POWER_SCALAR;
 import static org.firstinspires.ftc.teamcode.Constants.TURNING_ENCODER_POSITION_SCALAR;
@@ -190,7 +192,7 @@ public abstract class AutoBase extends OpMode {
             @Override
             public void onOpened()
             {
-                webcam.startStreaming(800, 600, OpenCvCameraRotation.UPRIGHT);
+                webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.UPRIGHT);
             }
            
             public void onError(int errorCode)

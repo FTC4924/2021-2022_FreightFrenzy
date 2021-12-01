@@ -30,6 +30,7 @@ public abstract class XDrive extends OpMode {
     private DcMotor rightFront;
     private DcMotor rightBack;
     private DcMotor armMotor;
+    private DcMotor armExtender;
 
     //Servos
     private Servo duckServo;
@@ -54,6 +55,8 @@ public abstract class XDrive extends OpMode {
     private boolean duckOut;
     private boolean bristlesIn;
     private boolean bristlesOut;
+    private boolean extenderIn;
+    private boolean extenderOut;
 
     public void init() {
 
@@ -67,6 +70,7 @@ public abstract class XDrive extends OpMode {
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
         armMotor = hardwareMap.get(DcMotor.class, "armMotor");
+        armExtender = hardwareMap.get(DcMotor.class, "armExtender");
 
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -275,6 +279,14 @@ public abstract class XDrive extends OpMode {
         } else {
             bristleServo.setPosition(0.5);
         }
+
+        // Controls the arm extender
+        if (Math.abs(gamepad2.right_stick_y) >= CONTROLLER_TOLERANCE) {
+            armExtender.setPower(gamepad2.right_stick_y);
+        } else {
+            armExtender.setPower(0.0);
+        }
+
     }
 
     protected abstract AllianceColor getAllianceColor();
