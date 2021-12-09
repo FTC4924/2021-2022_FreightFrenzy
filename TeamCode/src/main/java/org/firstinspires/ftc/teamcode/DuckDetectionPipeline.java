@@ -13,39 +13,36 @@ import static org.firstinspires.ftc.teamcode.Constants.*;
 class DuckDetectionPipeline extends OpenCvPipeline
 {
 
-    private int leftMean;
-    private int centerMean;
-    private int rightMean;
+    public static int leftMean;
+    public static int centerMean;
+    public static int rightMean;
 
     Mat YCrCb = new Mat();
-    Mat Cb = new Mat();
 
-    private volatile BarcodePos barcodePos = null;
+    private static volatile BarcodePos barcodePos = null;
 
     void inputToCb(Mat input)
     {
         Imgproc.cvtColor(input, YCrCb, Imgproc.COLOR_RGB2YCrCb);
-        Mat leftMat = new Mat();
         Mat centerMat = new Mat();
         Mat rightMat = new Mat();
 
-        Core.extractChannel(YCrCb.submat(REGION_A), leftMat, 2);
-        Core.extractChannel(YCrCb.submat(REGION_B), leftMat, 2);
-        Core.extractChannel(YCrCb.submat(REGION_C), leftMat, 2);
+        Core.extractChannel(YCrCb.submat(REGION_A), centerMat, COLOR_CHANNEL);
+        Core.extractChannel(YCrCb.submat(REGION_B), rightMat, COLOR_CHANNEL);
 
-        leftMean = (int) Core.mean(leftMat).val[0];
+        leftMean = 100;
         centerMean = (int) Core.mean(centerMat).val[0];
         rightMean = (int) Core.mean(rightMat).val[0];
     }
 
     private void maxAverage() {
-        int max = leftMean;
+        int min = leftMean;
         barcodePos = BarcodePos.LEFT;
-        if (centerMean > max) {
-            max = centerMean;
+        if (centerMean < min) {
+            min = centerMean;
             barcodePos = BarcodePos.CENTER;
         }
-        if (rightMean > max) {
+        if (rightMean < min) {
             barcodePos = BarcodePos.RIGHT;
         }
     }
@@ -63,14 +60,16 @@ class DuckDetectionPipeline extends OpenCvPipeline
 
         maxAverage();
 
-        Imgproc.rectangle(input, REGION_A, GREEN, 2);
-        Imgproc.rectangle(input, REGION_B, GREEN, 2);
-        Imgproc.rectangle(input, REGION_C, GREEN, 2);
+        Mat outputFrame = new Mat();
+        Core.extractChannel(YCrCb, outputFrame, COLOR_CHANNEL);
 
-        return input;
+        Imgproc.rectangle(outputFrame, REGION_A, GREEN, 2);
+        Imgproc.rectangle(outputFrame, REGION_B, GREEN, 2);
+
+        return outputFrame;
     }
 
-    public BarcodePos getBarcodePos()
+    public static BarcodePos getBarcodePos()
     {
         return barcodePos;
     }

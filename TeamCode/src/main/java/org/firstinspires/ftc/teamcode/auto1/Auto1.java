@@ -19,12 +19,25 @@ public abstract class Auto1 extends AutoBase {
         AllianceColor allianceColor = getAllianceColor();
         return new ArrayList<>(
                 Arrays.asList(
-                        //new Command(MOVE, AngleUnit.RADIANS, 1, -45.0, 0.2),
+                        new Command(RED_BLUE,
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                                new Command(MOVE, AngleUnit.DEGREES, 0.45, 90, .5)
+                                        )
+                                ),
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                                new Command(MOVE, AngleUnit.DEGREES, 0.5, -90, .5)
+                                        )
+                                )
+                        ),
+                        new Command(WAIT, 30)
+                        /*new Command(MOVE, AngleUnit.RADIANS, 1, -45.0, 0.2),
                         new Command(RED_BLUE,
                                 new ArrayList<>(
                                         Arrays.asList(
                                                 new Command(MOVE, AngleUnit.DEGREES, .3, 0, .5),
-                                                new Command(TURN, AngleUnit.DEGREES, 90),
+                                                new Command(TURN, AngleUnit.DEGREES, -90),
                                                 new Command(MOVE, AngleUnit.DEGREES, 4.4,90,.5)
                                         )
                                 ),
@@ -37,7 +50,7 @@ public abstract class Auto1 extends AutoBase {
                         new Command(DUCKS),
                         new Command(WAIT, 6),
                         new Command(DUCKS),
-                        new Command(MOVE, AngleUnit.DEGREES, 1.8, -10, 1)
+                        new Command(MOVE, AngleUnit.DEGREES, 1.8, -10, 1)*/
                 )
         );
     }

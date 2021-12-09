@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -29,7 +28,7 @@ public abstract class XDrive extends OpMode {
     private DcMotor leftBack;
     private DcMotor rightFront;
     private DcMotor rightBack;
-    private DcMotor armMotor;
+    private DcMotor armLifter;
     private DcMotor armExtender;
 
     //Servos
@@ -63,16 +62,18 @@ public abstract class XDrive extends OpMode {
         dashboard = FtcDashboard.getInstance();
         dashboardTelemetry = dashboard.getTelemetry();
 
+        allianceColor = getAllianceColor();
+
         /*Instantiating the motor and servo objects as their appropriate motor/servo in the
         configuration on the robot*/
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
-        armMotor = hardwareMap.get(DcMotor.class, "armMotor");
+        armLifter = hardwareMap.get(DcMotor.class, "armLifter");
         armExtender = hardwareMap.get(DcMotor.class, "armExtender");
 
-        armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
         bristleServo = hardwareMap.get(Servo.class, "bristleServo");
@@ -242,9 +243,9 @@ public abstract class XDrive extends OpMode {
      */
     private void arm() {
         if (Math.abs(gamepad2.left_stick_y) >= CONTROLLER_TOLERANCE) {
-            armMotor.setPower(gamepad2.left_stick_y);
+            armLifter.setPower(gamepad2.left_stick_y);
         } else {
-            armMotor.setPower(0.0);
+            armLifter.setPower(0.0);
         }
 
         //Double toggle for the bristles

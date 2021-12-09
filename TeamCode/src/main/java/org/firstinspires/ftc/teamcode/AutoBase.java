@@ -192,12 +192,14 @@ public abstract class AutoBase extends OpMode {
             @Override
             public void onOpened()
             {
-                webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.UPRIGHT);
+                webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.SIDEWAYS_RIGHT);
+                telemetry.addData("Webcam", "Setup Finished");
             }
            
             public void onError(int errorCode)
             {
-                telemetry.speak("The web cam wasn't initialised correctly!");
+                telemetry.speak("The web cam wasn't initialised correctly! Error code: " + errorCode);
+                telemetry.addData("Webcam", "Setup Failed! Error code: " + errorCode);
             }
         });
     }
@@ -247,10 +249,9 @@ public abstract class AutoBase extends OpMode {
         gyroCorrection();
 
         setWheelPowersAndPositions();
-        telemetry.addData("leftFront", leftFrontTargetPosition);
-        telemetry.addData("leftBack", leftBackTargetPosition);
-        telemetry.addData("rightFront", rightFrontTargetPosition);
-        telemetry.addData("rightBack", rightBackTargetPosition);
+        telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
+        telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
+        telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
     }
 
     private void redOrBlue() {
@@ -325,7 +326,7 @@ public abstract class AutoBase extends OpMode {
     private void turn() {
         if(commandFirstLoop) {
             commandFirstLoop = false;
-            targetAngle = currentCommand.angle * allianceColor.direction;
+            targetAngle = currentCommand.angle;
             angleError = targetAngle - currentRobotAngle;
             angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
         }
