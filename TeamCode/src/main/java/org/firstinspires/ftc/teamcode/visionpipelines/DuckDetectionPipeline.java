@@ -1,16 +1,13 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.visionpipelines;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
-import org.opencv.core.Point;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
 
 import static org.firstinspires.ftc.teamcode.Constants.*;
 
-class DuckDetectionPipeline extends OpenCvPipeline
+public class DuckDetectionPipeline extends OpenCvPipeline
 {
 
     public static int leftMean;
@@ -24,14 +21,14 @@ class DuckDetectionPipeline extends OpenCvPipeline
     void inputToCb(Mat input)
     {
         Imgproc.cvtColor(input, YCrCb, Imgproc.COLOR_RGB2YCrCb);
-        Mat centerMat = new Mat();
+        //Mat centerMat = new Mat();
         Mat rightMat = new Mat();
 
-        Core.extractChannel(YCrCb.submat(REGION_A), centerMat, COLOR_CHANNEL);
+        //Core.extractChannel(YCrCb.submat(REGION_A), centerMat, COLOR_CHANNEL);
         Core.extractChannel(YCrCb.submat(REGION_B), rightMat, COLOR_CHANNEL);
 
         leftMean = 100;
-        centerMean = (int) Core.mean(centerMat).val[0];
+        centerMean = (int) Core.mean(YCrCb.submat(REGION_A)).val[COLOR_CHANNEL];
         rightMean = (int) Core.mean(rightMat).val[0];
     }
 
@@ -48,14 +45,12 @@ class DuckDetectionPipeline extends OpenCvPipeline
     }
 
     @Override
-    public void init(Mat firstFrame)
-    {
+    public void init(Mat firstFrame) {
         inputToCb(firstFrame);
     }
 
     @Override
-    public Mat processFrame(Mat input)
-    {
+    public Mat processFrame(Mat input) {
         inputToCb(input);
 
         maxAverage();

@@ -14,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackableDefaultListener;
 import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
+import org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -27,7 +28,6 @@ import static org.firstinspires.ftc.teamcode.Constants.ANGLE_ERROR_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Constants.AUTO_DUCK_SPEED;
 import static org.firstinspires.ftc.teamcode.Constants.AllianceColor;
 import static org.firstinspires.ftc.teamcode.Constants.DEFAULT_DISTANCE_FROM_IMAGE;
-import static org.firstinspires.ftc.teamcode.Constants.DUCK_SPEED;
 import static org.firstinspires.ftc.teamcode.Constants.ENCODER_POSITION_TOLERANCE;
 import static org.firstinspires.ftc.teamcode.Constants.IMAGE_DETECTION_COUNT;
 import static org.firstinspires.ftc.teamcode.Constants.RESOLUTION_HEIGHT;
@@ -94,7 +94,7 @@ public abstract class AutoBase extends OpMode {
     private boolean targetVisible;
     private double distanceFromImage;
 
-    OpenCvWebcam webcam;
+    private OpenCvWebcam webcam;
 
     private boolean ducksOn;
 

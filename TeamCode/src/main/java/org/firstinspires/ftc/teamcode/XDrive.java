@@ -7,9 +7,16 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.teamcode.visionpipelines.CameraRecordingPipeline;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvWebcam;
+import org.openftc.easyopencv.PipelineRecordingParameters;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
@@ -30,6 +37,8 @@ public abstract class XDrive extends OpMode {
     private DcMotor rightBack;
     private DcMotor armLifter;
     private DcMotor armExtender;
+
+    private OpenCvWebcam webcam;
 
     //Servos
     private Servo duckServo;
@@ -93,6 +102,31 @@ public abstract class XDrive extends OpMode {
         targetAngle = 0.0;
         angleOffset = 0.0;
         duckAccelerate = 0.1;
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+
+        webcam.setPipeline(new CameraRecordingPipeline());
+        webcam.setMillisecondsPermissionTimeout(2500);
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
+        {
+            @Override
+            public void onOpened()
+            {
+                CameraRecordingPipeline.webcam = webcam;
+                webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.SIDEWAYS_RIGHT);
+                telemetry.addData("Webcam", "Setup Finished");
+            }
+
+            public void onError(int errorCode)
+            {
+                telemetry.speak("The web cam wasn't initialised correctly! Error code: " + errorCode);
+                telemetry.addData("Webcam", "Setup Failed! Error code: " + errorCode);
+            }
+        });
+    }
+
+    public void start() {
     }
 
     public void loop() {
@@ -163,7 +197,7 @@ public abstract class XDrive extends OpMode {
 
             /*Uses the Y of the right stick to determine the speed of the robot's movement with 0
             being 0.5 power*/
-            double rightYPower = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
+            double rightYPower = gamepad1RightStickY;//Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
             leftFrontPower *= rightYPower;
             leftBackPower *= rightYPower;
             rightFrontPower *= rightYPower;
