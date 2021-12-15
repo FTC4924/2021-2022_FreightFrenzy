@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -44,6 +45,8 @@ public abstract class XDrive extends OpMode {
     private Servo duckServo;
     private Servo bristleServo;
 
+    DigitalChannel digitalTouch;
+
     //Creating the variables for the gyro sensor
     private BNO055IMU imu;
 
@@ -83,9 +86,16 @@ public abstract class XDrive extends OpMode {
         armExtender = hardwareMap.get(DcMotor.class, "armExtender");
 
         armLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armExtender.setTargetPosition(0);
+        armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
         bristleServo = hardwareMap.get(Servo.class, "bristleServo");
+
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         //Initializing the Revhub IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -141,6 +151,11 @@ public abstract class XDrive extends OpMode {
 
         arm();
 
+        if (digitalTouch.getState()) {
+            telemetry.addData("Digital Touch", "Is Pressed");
+        } else {
+            telemetry.addData("Digital Touch", "Is Not Pressed");
+        }
     }
 
     /**
@@ -197,7 +212,7 @@ public abstract class XDrive extends OpMode {
 
             /*Uses the Y of the right stick to determine the speed of the robot's movement with 0
             being 0.5 power*/
-            double rightYPower = gamepad1RightStickY;//Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
+            double rightYPower = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
             leftFrontPower *= rightYPower;
             leftBackPower *= rightYPower;
             rightFrontPower *= rightYPower;
@@ -317,10 +332,15 @@ public abstract class XDrive extends OpMode {
 
         // Controls the arm extender
         if (Math.abs(gamepad2.right_stick_y) >= CONTROLLER_TOLERANCE) {
-            armExtender.setPower(gamepad2.right_stick_y);
+            armExtender.setPower(gamepad2.right_stick_y/3);
+            armExtender.setTargetPosition(
+                    (int)(armExtender.getCurrentPosition() + gamepad2.right_stick_y)
+            );
         } else {
             armExtender.setPower(0.0);
+            armExtender.setTargetPosition(armExtender.getCurrentPosition());
         }
+        telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
 
     }
 
