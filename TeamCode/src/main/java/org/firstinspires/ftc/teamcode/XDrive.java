@@ -68,6 +68,7 @@ public abstract class XDrive extends OpMode {
     private boolean bristlesOut;
     private boolean extenderIn;
     private boolean extenderOut;
+    private boolean resetArmEncoder;
 
     public void init() {
 
@@ -88,8 +89,7 @@ public abstract class XDrive extends OpMode {
         armLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armExtender.setTargetPosition(0);
-        armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
         bristleServo = hardwareMap.get(Servo.class, "bristleServo");
@@ -150,12 +150,6 @@ public abstract class XDrive extends OpMode {
         ducks();
 
         arm();
-
-        if (digitalTouch.getState()) {
-            telemetry.addData("Digital Touch", "Is Pressed");
-        } else {
-            telemetry.addData("Digital Touch", "Is Not Pressed");
-        }
     }
 
     /**
@@ -230,11 +224,11 @@ public abstract class XDrive extends OpMode {
         if (gamepad1LeftTrigger >= CONTROLLER_TOLERANCE) {
             //targetAngle += Math.toRadians(gamepad1LeftTrigger * TURNING_ANGLE_POSITION_SCALAR);
 
-            robotAngleError += gamepad1LeftTrigger;
+            robotAngleError += Math.pow(gamepad1LeftTrigger, 2);
         }
         if (gamepad1RightTrigger >= CONTROLLER_TOLERANCE) {
             //targetAngle -= Math.toRadians(gamepad1RightTrigger * TURNING_ANGLE_POSITION_SCALAR);
-            robotAngleError -= gamepad1RightTrigger;
+            robotAngleError -= Math.pow(gamepad1RightTrigger, 2);
         }
 
         telemetry.addData("target angle", Math.toDegrees(targetAngle));
@@ -298,7 +292,7 @@ public abstract class XDrive extends OpMode {
         }
 
         //Double toggle for the bristles
-        if (gamepad2.a) {
+        if (gamepad2.b) {
             if (!aPressed) {
                 aPressed = true;
                 bristlesIn = !bristlesIn;
@@ -309,7 +303,7 @@ public abstract class XDrive extends OpMode {
         } else {
             aPressed = false;
         }
-        if (gamepad2.b) {
+        if (gamepad2.a) {
             if (!bPressed) {
                 bPressed = true;
                 bristlesOut = !bristlesOut;
@@ -323,22 +317,39 @@ public abstract class XDrive extends OpMode {
 
         //Setting the bristles power
         if (bristlesIn) {
-            bristleServo.setPosition(BRISTLES_POWER);
+            bristleServo.setPosition(.5 + BRISTLES_POWER / 2);
         } else if (bristlesOut) {
-            bristleServo.setPosition(1 - BRISTLES_POWER);
+            bristleServo.setPosition(.5 - BRISTLES_POWER / 2);
         } else {
             bristleServo.setPosition(0.5);
         }
 
         // Controls the arm extender
-        if (Math.abs(gamepad2.right_stick_y) >= CONTROLLER_TOLERANCE) {
-            armExtender.setPower(gamepad2.right_stick_y/3);
-            armExtender.setTargetPosition(
-                    (int)(armExtender.getCurrentPosition() + gamepad2.right_stick_y)
-            );
+        if (digitalTouch.getState()) {
+            telemetry.addData("Digital Touch", "Pressed");
+        } else {
+
+        }
+        if (!digitalTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
+            armExtender.setPower(gamepad2.right_stick_y / 2);
+        } else if (armExtender.getCurrentPosition() > -8000 && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
+            armExtender.setPower(gamepad2.right_stick_y / 2);
         } else {
             armExtender.setPower(0.0);
-            armExtender.setTargetPosition(armExtender.getCurrentPosition());
+        }
+        if (digitalTouch.getState()) {
+            if (!resetArmEncoder) {
+                resetArmEncoder = true;
+                armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+            }
+        } else {
+            if (resetArmEncoder) {
+                armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            }
+            resetArmEncoder = false;
         }
         telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
 
