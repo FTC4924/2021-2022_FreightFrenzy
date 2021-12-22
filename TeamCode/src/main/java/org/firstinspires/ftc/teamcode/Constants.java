@@ -5,6 +5,8 @@ import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
+import androidx.annotation.FloatRange;
+
 /**
  * Contains constants for all of the programs in one file for easy access.
  */
@@ -17,8 +19,9 @@ public class Constants {
     protected static final double ANGLE_ERROR_TOLERANCE = 0.05;
     protected static final double ENCODER_POSITION_TOLERANCE = 20.0;
 
+    @FloatRange(from=0.0, to=1.0)
     protected static final double BRISTLES_POWER = 1;
-    protected static final double DUCK_SPEED = -0.15;
+    protected static final double DUCK_SPEED = -0.12;
     protected static final double AUTO_DUCK_SPEED = -.05;
 
     public enum BarcodePos {

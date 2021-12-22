@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -44,6 +45,8 @@ public abstract class XDrive extends OpMode {
     private Servo duckServo;
     private Servo bristleServo;
 
+    DigitalChannel digitalTouch;
+
     //Creating the variables for the gyro sensor
     private BNO055IMU imu;
 
@@ -65,6 +68,7 @@ public abstract class XDrive extends OpMode {
     private boolean bristlesOut;
     private boolean extenderIn;
     private boolean extenderOut;
+    private boolean resetArmEncoder;
 
     public void init() {
 
@@ -83,9 +87,15 @@ public abstract class XDrive extends OpMode {
         armExtender = hardwareMap.get(DcMotor.class, "armExtender");
 
         armLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
         bristleServo = hardwareMap.get(Servo.class, "bristleServo");
+
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         //Initializing the Revhub IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
@@ -140,7 +150,6 @@ public abstract class XDrive extends OpMode {
         ducks();
 
         arm();
-
     }
 
     /**
@@ -197,7 +206,7 @@ public abstract class XDrive extends OpMode {
 
             /*Uses the Y of the right stick to determine the speed of the robot's movement with 0
             being 0.5 power*/
-            double rightYPower = gamepad1RightStickY;//Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
+            double rightYPower = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
             leftFrontPower *= rightYPower;
             leftBackPower *= rightYPower;
             rightFrontPower *= rightYPower;
@@ -215,11 +224,11 @@ public abstract class XDrive extends OpMode {
         if (gamepad1LeftTrigger >= CONTROLLER_TOLERANCE) {
             //targetAngle += Math.toRadians(gamepad1LeftTrigger * TURNING_ANGLE_POSITION_SCALAR);
 
-            robotAngleError += gamepad1LeftTrigger;
+            robotAngleError += Math.pow(gamepad1LeftTrigger, 2);
         }
         if (gamepad1RightTrigger >= CONTROLLER_TOLERANCE) {
             //targetAngle -= Math.toRadians(gamepad1RightTrigger * TURNING_ANGLE_POSITION_SCALAR);
-            robotAngleError -= gamepad1RightTrigger;
+            robotAngleError -= Math.pow(gamepad1RightTrigger, 2);
         }
 
         telemetry.addData("target angle", Math.toDegrees(targetAngle));
@@ -283,7 +292,7 @@ public abstract class XDrive extends OpMode {
         }
 
         //Double toggle for the bristles
-        if (gamepad2.a) {
+        if (gamepad2.b) {
             if (!aPressed) {
                 aPressed = true;
                 bristlesIn = !bristlesIn;
@@ -294,7 +303,7 @@ public abstract class XDrive extends OpMode {
         } else {
             aPressed = false;
         }
-        if (gamepad2.b) {
+        if (gamepad2.a) {
             if (!bPressed) {
                 bPressed = true;
                 bristlesOut = !bristlesOut;
@@ -308,19 +317,41 @@ public abstract class XDrive extends OpMode {
 
         //Setting the bristles power
         if (bristlesIn) {
-            bristleServo.setPosition(BRISTLES_POWER);
+            bristleServo.setPosition(.5 + BRISTLES_POWER / 2);
         } else if (bristlesOut) {
-            bristleServo.setPosition(1 - BRISTLES_POWER);
+            bristleServo.setPosition(.5 - BRISTLES_POWER / 2);
         } else {
             bristleServo.setPosition(0.5);
         }
 
         // Controls the arm extender
-        if (Math.abs(gamepad2.right_stick_y) >= CONTROLLER_TOLERANCE) {
-            armExtender.setPower(gamepad2.right_stick_y);
+        if (digitalTouch.getState()) {
+            telemetry.addData("Digital Touch", "Pressed");
+        } else {
+
+        }
+        if (!digitalTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
+            armExtender.setPower(gamepad2.right_stick_y / 2);
+        } else if (armExtender.getCurrentPosition() > -8000 && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
+            armExtender.setPower(gamepad2.right_stick_y / 2);
         } else {
             armExtender.setPower(0.0);
         }
+        if (digitalTouch.getState()) {
+            if (!resetArmEncoder) {
+                resetArmEncoder = true;
+                armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+            }
+        } else {
+            if (resetArmEncoder) {
+                armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            }
+            resetArmEncoder = false;
+        }
+        telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
 
     }
 
