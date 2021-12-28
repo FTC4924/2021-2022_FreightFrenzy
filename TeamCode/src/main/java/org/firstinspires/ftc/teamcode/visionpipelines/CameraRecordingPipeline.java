@@ -27,6 +27,7 @@ public class CameraRecordingPipeline extends OpenCvPipeline {
                     .setPath(WEBCAM_RECORDING_FILE)
                     .build();
             //webcam.startRecordingPipeline(parameters);
+            webcam.showFpsMeterOnViewport(true);
 
         } catch (OpenCvCameraException e) {
             Log.e("Camera Pipeline", Arrays.toString(e.getStackTrace()));

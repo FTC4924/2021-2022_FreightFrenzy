@@ -17,11 +17,10 @@ import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
-import org.openftc.easyopencv.PipelineRecordingParameters;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
-import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER;
+import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER_IN;
 
 
 public abstract class XDrive extends OpMode {
@@ -36,7 +35,7 @@ public abstract class XDrive extends OpMode {
     private DcMotor leftBack;
     private DcMotor rightFront;
     private DcMotor rightBack;
-    private DcMotor armLifter;
+    private DcMotor armRotator;
     private DcMotor armExtender;
 
     private OpenCvWebcam webcam;
@@ -66,8 +65,6 @@ public abstract class XDrive extends OpMode {
     private boolean duckOut;
     private boolean bristlesIn;
     private boolean bristlesOut;
-    private boolean extenderIn;
-    private boolean extenderOut;
     private boolean resetArmEncoder;
 
     public void init() {
@@ -83,10 +80,10 @@ public abstract class XDrive extends OpMode {
         leftBack = hardwareMap.get(DcMotor.class, "leftBack");
         rightFront = hardwareMap.get(DcMotor.class, "rightFront");
         rightBack = hardwareMap.get(DcMotor.class, "rightBack");
-        armLifter = hardwareMap.get(DcMotor.class, "armLifter");
+        armRotator = hardwareMap.get(DcMotor.class, "armRotator");
         armExtender = hardwareMap.get(DcMotor.class, "armExtender");
 
-        armLifter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armRotator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -111,7 +108,6 @@ public abstract class XDrive extends OpMode {
         currentRobotAngle = 0.0;
         targetAngle = 0.0;
         angleOffset = 0.0;
-        duckAccelerate = 0.1;
 
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
@@ -231,6 +227,8 @@ public abstract class XDrive extends OpMode {
             robotAngleError -= Math.pow(gamepad1RightTrigger, 2);
         }
 
+        telemetry.addData("gamepad1RightTrigger",gamepad1RightTrigger);
+
         telemetry.addData("target angle", Math.toDegrees(targetAngle));
         dashboardTelemetry.addData("robotAngleError",robotAngleError);
         dashboardTelemetry.update();
@@ -278,7 +276,6 @@ public abstract class XDrive extends OpMode {
         } else {
             duckServo.setPosition(0.5);
         }
-        telemetry.addData("Duck Accelerate", duckAccelerate);
     }
 
     /**
@@ -286,9 +283,9 @@ public abstract class XDrive extends OpMode {
      */
     private void arm() {
         if (Math.abs(gamepad2.left_stick_y) >= CONTROLLER_TOLERANCE) {
-            armLifter.setPower(gamepad2.left_stick_y);
+            armRotator.setPower(gamepad2.left_stick_y);
         } else {
-            armLifter.setPower(0.0);
+            armRotator.setPower(0.0);
         }
 
         //Double toggle for the bristles
@@ -317,9 +314,9 @@ public abstract class XDrive extends OpMode {
 
         //Setting the bristles power
         if (bristlesIn) {
-            bristleServo.setPosition(.5 + BRISTLES_POWER / 2);
+            bristleServo.setPosition(.5 + BRISTLES_POWER_IN / 2);
         } else if (bristlesOut) {
-            bristleServo.setPosition(.5 - BRISTLES_POWER / 2);
+            bristleServo.setPosition(.5 - BRISTLES_POWER_OUT / 2);
         } else {
             bristleServo.setPosition(0.5);
         }

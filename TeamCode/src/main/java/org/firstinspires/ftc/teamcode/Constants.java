@@ -20,7 +20,8 @@ public class Constants {
     protected static final double ENCODER_POSITION_TOLERANCE = 20.0;
 
     @FloatRange(from=0.0, to=1.0)
-    protected static final double BRISTLES_POWER = 1;
+    protected static final double BRISTLES_POWER_IN = 1;
+    protected static final double BRISTLES_POWER_OUT = .75;
     protected static final double DUCK_SPEED = -0.12;
     protected static final double AUTO_DUCK_SPEED = -.05;
 
@@ -34,15 +35,17 @@ public class Constants {
 
     public enum AllianceColor {
 
-        BLUE(1, 0),
-        RED(-1, 0);
+        BLUE(1, 0,.5),
+        RED(-1, 0,.45);
 
         public final int direction;
         protected final double angleOffset;
+        public final double distanceToDucks;
 
-        AllianceColor(int direction, double angleOffset) {
+        AllianceColor(int direction, double angleOffset, double distanceToDucks) {
             this.direction = direction;
             this.angleOffset = angleOffset;
+            this.distanceToDucks = distanceToDucks;
         }
 
     }
@@ -52,8 +55,11 @@ public class Constants {
         MOVE,
         TURN,
         WAIT,
-        DETECT_IMAGE,
-        RED_BLUE,
+        ARM_EXTENSION,
+        ARM_ROTATION,
+        BLUE_RED,
+        DETECT_DUCK_POSITION,
+        LOAD_DUCK_COMMANDS,
         DUCKS
     }
 
@@ -84,6 +90,6 @@ public class Constants {
 
     protected static final double TURNING_ANGLE_POSITION_SCALAR = 2.0;
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;
-    protected static final double TURNING_POWER_SCALAR = 4;
+    protected static final double TURNING_POWER_SCALAR = 1;
 
 }
