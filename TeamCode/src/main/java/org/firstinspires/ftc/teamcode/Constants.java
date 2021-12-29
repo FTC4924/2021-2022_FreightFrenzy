@@ -24,6 +24,8 @@ public class Constants {
     protected static final double BRISTLES_POWER_OUT = .75;
     protected static final double DUCK_SPEED = -0.12;
     protected static final double AUTO_DUCK_SPEED = -.05;
+    public static final double MAX_ARM_EXTENSION = -8000;
+    public static final double MAX_ARM_ROTATION = -6500;
 
     public enum BarcodePos {
 
@@ -55,8 +57,8 @@ public class Constants {
         MOVE,
         TURN,
         WAIT,
-        ARM_EXTENSION,
-        ARM_ROTATION,
+        ARM_EXTEND,
+        ARM_ROTATE,
         BLUE_RED,
         DETECT_DUCK_POSITION,
         LOAD_DUCK_COMMANDS,

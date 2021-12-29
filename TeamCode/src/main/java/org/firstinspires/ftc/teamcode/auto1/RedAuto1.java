@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.Constants.*;
 
-@Disabled
 @Autonomous(name="RedAuto1")
 public class RedAuto1 extends Auto1 {
     @Override

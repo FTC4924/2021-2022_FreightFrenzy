@@ -67,7 +67,7 @@ public abstract class AutoBase extends OpMode {
     private Orientation angles;
 
     private double currentRobotAngle;
-    private double targetAngle;
+    private static double targetAngle;
     private double angleError;
 
     private OpenGLMatrix robotFromCamera;
@@ -124,7 +124,9 @@ public abstract class AutoBase extends OpMode {
         armRotator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armExtender.setTargetPosition(0);
+        armExtender.setPower(.5);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
 
@@ -230,11 +232,11 @@ public abstract class AutoBase extends OpMode {
                 pause();
                 break;
 
-            case ARM_EXTENSION:
+            case ARM_EXTEND:
                 armExtension();
                 break;
 
-            case ARM_ROTATION:
+            case ARM_ROTATE:
                 armRotation();
                 break;
 
@@ -262,14 +264,15 @@ public abstract class AutoBase extends OpMode {
         telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
         telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
         telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
+        telemetry.addData("targetAngle", targetAngle);
     }
 
     private void armRotation() {
-        armRotator.setTargetPosition(currentCommand.armRotation);
+        armRotator.setTargetPosition(currentCommand.position);
     }
 
     private void armExtension() {
-        armExtender.setTargetPosition(currentCommand.armExtension);
+        armExtender.setTargetPosition(currentCommand.position);
     }
 
     private void loadDuckCommands() {
@@ -361,8 +364,7 @@ public abstract class AutoBase extends OpMode {
         if(commandFirstLoop) {
             commandFirstLoop = false;
             targetAngle = currentCommand.angle * allianceColor.direction;
-            angleError = targetAngle - currentRobotAngle;
-            angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
+            getAngleError();
         }
         if(Math.abs(angleError) < ANGLE_ERROR_TOLERANCE) {
             startNextCommand();
@@ -423,6 +425,7 @@ public abstract class AutoBase extends OpMode {
         angleError = targetAngle - currentRobotAngle;
         angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
         telemetry.addData("Angle Error", angleError);
+        telemetry.addData("raw robot angle", angles.firstAngle);
     }
 
     /**
@@ -472,6 +475,10 @@ public abstract class AutoBase extends OpMode {
             resetStartTime();
             if(time > 1) requestOpModeStop();
         }
+    }
+
+    public static double getTargetAngle() {
+        return targetAngle;
     }
 
     protected abstract AllianceColor getAllianceColor();

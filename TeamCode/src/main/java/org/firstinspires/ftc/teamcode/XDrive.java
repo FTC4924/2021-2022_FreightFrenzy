@@ -227,12 +227,6 @@ public abstract class XDrive extends OpMode {
             robotAngleError -= Math.pow(gamepad1RightTrigger, 2);
         }
 
-        telemetry.addData("gamepad1RightTrigger",gamepad1RightTrigger);
-
-        telemetry.addData("target angle", Math.toDegrees(targetAngle));
-        dashboardTelemetry.addData("robotAngleError",robotAngleError);
-        dashboardTelemetry.update();
-
         //robotAngleError = targetAngle - currentRobotAngle;
         //robotAngleError = ((((robotAngleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
 
@@ -324,12 +318,10 @@ public abstract class XDrive extends OpMode {
         // Controls the arm extender
         if (digitalTouch.getState()) {
             telemetry.addData("Digital Touch", "Pressed");
-        } else {
-
         }
         if (!digitalTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
             armExtender.setPower(gamepad2.right_stick_y / 2);
-        } else if (armExtender.getCurrentPosition() > -8000 && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
+        } else if (armExtender.getCurrentPosition() > MAX_ARM_EXTENSION && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
             armExtender.setPower(gamepad2.right_stick_y / 2);
         } else {
             armExtender.setPower(0.0);
@@ -349,6 +341,7 @@ public abstract class XDrive extends OpMode {
             resetArmEncoder = false;
         }
         telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
+        telemetry.addData("Arm Rotator", armRotator.getCurrentPosition());
 
     }
 

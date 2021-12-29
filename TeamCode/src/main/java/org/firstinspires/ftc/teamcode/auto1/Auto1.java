@@ -17,9 +17,11 @@ public abstract class Auto1 extends AutoBase {
         return new ArrayList<>(
                 Arrays.asList(
                         new Move(allianceColor.distanceToDucks, -90, .5),
-                        new Command(DETECT_DUCK_POSITION),
-                        new Command(TURN,25),
-                        new Command(MOVE,3,0,.5),
+                        new DetectDuckPosition(),
+                        new Move(0.5,0.5),
+                        new ArmExtend(.5),
+                        new Turn(32),
+                        new Move(1.5,.5)/*,
                         new Command(LOAD_DUCK_COMMANDS,
                                 new ArrayList<>(
                                         Arrays.asList(
@@ -35,7 +37,7 @@ public abstract class Auto1 extends AutoBase {
                                         Arrays.asList(
                                                 new Command(MOVE,0.5, -90, .5)
                                         )
-                                ))
+                                ))*/
                 )
         );
     }
