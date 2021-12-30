@@ -16,10 +16,11 @@ public abstract class Auto1 extends AutoBase {
         AllianceColor allianceColor = getAllianceColor();
         return new ArrayList<>(
                 Arrays.asList(
+                        new ArmRotate(.2),
+                        new ArmExtend(.5),
                         new Move(allianceColor.distanceToDucks, -90, .5),
                         new DetectDuckPosition(),
                         new Move(0.5,0.5),
-                        new ArmExtend(.5),
                         new Turn(32),
                         new Move(1.5,.5)/*,
                         new Command(LOAD_DUCK_COMMANDS,

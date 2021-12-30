@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -22,6 +24,8 @@ import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import LedDisplayI2cDriver.HT16K33;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
@@ -92,6 +96,8 @@ public abstract class AutoBase extends OpMode {
 
     private BarcodePos barcodePos;
 
+    HT16K33 display;
+
     public void init() {
         allianceColor = getAllianceColor();
         currentCommands = getCommands();
@@ -120,12 +126,16 @@ public abstract class AutoBase extends OpMode {
         rightBack.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         armRotator = hardwareMap.get(DcMotor.class, "armRotator");
-        armExtender = hardwareMap.get(DcMotor.class, "armExtender");
         armRotator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armRotator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armRotator.setTargetPosition(0);
+        armRotator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armRotator.setPower(.5);
+        armExtender = hardwareMap.get(DcMotor.class, "armExtender");
         armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armExtender.setTargetPosition(0);
+        armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armExtender.setPower(.5);
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
@@ -201,6 +211,9 @@ public abstract class AutoBase extends OpMode {
                 telemetry.addData("Webcam", "Setup Failed! Error code: " + errorCode);
             }
         });
+
+        display = hardwareMap.get(HT16K33.class, "display8x8");
+        display.displayOn();
     }
 
     public void start() {
@@ -208,71 +221,83 @@ public abstract class AutoBase extends OpMode {
     }
 
     public void loop() {
-        leftFrontPower = 0;
-        leftBackPower = 0;
-        rightFrontPower = 0;
-        rightBackPower = 0;
+        try {
+            leftFrontPower = 0;
+            leftBackPower = 0;
+            rightFrontPower = 0;
+            rightBackPower = 0;
 
-        getAngleError();
+            getAngleError();
 
-        switch (currentCommand.commandType) {
-            case MOVE:
-                holonomicDrive();
-                break;
+            switch (currentCommand.commandType) {
+                case MOVE:
+                    holonomicDrive();
+                    break;
 
-            case TURN:
-                turn();
-                break;
+                case TURN:
+                    turn();
+                    break;
 
-            case BLUE_RED:
-                blueOrRed();
-                break;
+                case BLUE_RED:
+                    blueOrRed();
+                    break;
 
-            case WAIT:
-                pause();
-                break;
+                case WAIT:
+                    pause();
+                    break;
 
-            case ARM_EXTEND:
-                armExtension();
-                break;
+                case ARM_EXTEND:
+                    armExtension();
+                    break;
 
-            case ARM_ROTATE:
-                armRotation();
-                break;
+                case ARM_ROTATE:
+                    armRotation();
+                    break;
 
-            case DUCKS:
-                ducks();
-                break;
+                case DUCKS:
+                    ducks();
+                    break;
 
-            case DETECT_DUCK_POSITION:
-                detectDuckPosition();
-                break;
+                case DETECT_DUCK_POSITION:
+                    detectDuckPosition();
+                    break;
 
-            case LOAD_DUCK_COMMANDS:
-                loadDuckCommands();
-                break;
+                case LOAD_DUCK_COMMANDS:
+                    loadDuckCommands();
+                    break;
 
-            case NONE:
-                startNextCommand();
-                break;
+                case NONE:
+                    startNextCommand();
+                    break;
+            }
+
+            gyroCorrection();
+
+            setWheelPowersAndPositions();
+
+            display.writeDisplay();
+
+            telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
+            telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
+            telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
+            telemetry.addData("targetAngle", targetAngle);
         }
-
-        gyroCorrection();
-
-        setWheelPowersAndPositions();
-
-        telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
-        telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
-        telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
-        telemetry.addData("targetAngle", targetAngle);
+        catch (Exception e) {
+            Log.e("AutoBase", "loop: ", e);
+            throw e;
+        }
     }
 
     private void armRotation() {
         armRotator.setTargetPosition(currentCommand.position);
+        if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < 20)
+            startNextCommand();
     }
 
     private void armExtension() {
         armExtender.setTargetPosition(currentCommand.position);
+        if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < 20)
+            startNextCommand();
     }
 
     private void loadDuckCommands() {
@@ -382,6 +407,7 @@ public abstract class AutoBase extends OpMode {
 
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
+        display.drawCharacter(0, 0, barcodePos.name().charAt(0));
         startNextCommand();
     }
 
@@ -479,6 +505,12 @@ public abstract class AutoBase extends OpMode {
 
     public static double getTargetAngle() {
         return targetAngle;
+    }
+
+    @Override
+    public void stop() {
+        display.clear();
+        display.displayOff();
     }
 
     protected abstract AllianceColor getAllianceColor();

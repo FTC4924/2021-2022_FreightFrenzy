@@ -16,7 +16,6 @@ public class CameraRecordingPipeline extends OpenCvPipeline {
 
     public static OpenCvCamera webcam;
 
-    @Override
     public void init(Mat mat) {
         try {
             PipelineRecordingParameters parameters = new PipelineRecordingParameters.Builder()

@@ -27,6 +27,8 @@ public class Constants {
     public static final double MAX_ARM_EXTENSION = -8000;
     public static final double MAX_ARM_ROTATION = -6500;
 
+    private static final int CHARACTER_WIDTH = 5;
+
     public enum BarcodePos {
 
         LEFT,
