@@ -6,14 +6,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.teamcode.Commands.Command;
 import org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -21,7 +16,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
@@ -34,12 +28,10 @@ import static org.firstinspires.ftc.teamcode.Constants.*;
 public abstract class AutoBase extends OpMode {
 
     protected static AllianceColor allianceColor;
+
     private ArrayList<Command> currentCommands;
-    private ArrayList<Command> newCommands;
     private ArrayList<ArrayList<Command>> upstreamCommands;
     private Command currentCommand;
-    private int currentCommandIndex;
-    private ArrayList<Integer> upstreamCommandIndexes;
     private boolean commandFirstLoop;
 
     private DcMotor leftFront;
@@ -70,22 +62,6 @@ public abstract class AutoBase extends OpMode {
     private double targetAngle;
     private double angleError;
 
-    private OpenGLMatrix robotFromCamera;
-    private OpenGLMatrix robotLocationTransform;
-    private OpenGLMatrix lastLocation;
-
-    private int cameraMonitorViewId;
-
-    private WebcamName webcam1;
-    private VuforiaLocalizer.Parameters vuforiaParameters;
-    private VuforiaLocalizer vuforia;
-
-    private VuforiaTrackables targetsUltimateGoal;
-    private List<VuforiaTrackable> allTrackables;
-
-    private boolean targetVisible;
-    private double distanceFromImage;
-
     private OpenCvWebcam webcam;
 
     private boolean ducksOn;
@@ -95,11 +71,8 @@ public abstract class AutoBase extends OpMode {
     public void init() {
         allianceColor = getAllianceColor();
         currentCommands = getCommands();
-        newCommands = null;
         upstreamCommands = new ArrayList<>();
         currentCommand = currentCommands.get(0);
-        currentCommandIndex = 0;
-        upstreamCommandIndexes = new ArrayList<>();
         commandFirstLoop = true;
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -152,33 +125,6 @@ public abstract class AutoBase extends OpMode {
         targetAngle = 0.0;
         angleError = 0.0;
 
-        /*robotFromCamera = OpenGLMatrix
-                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, RADIANS, CAMERA_X_ROTATE, CAMERA_Y_ROTATE, CAMERA_Z_ROTATE));
-        lastLocation = null;
-        robotLocationTransform = null;
-
-        cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-
-        webcam1 = hardwareMap.get(WebcamName.class, "Webcam 1");
-        vuforiaParameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-        vuforiaParameters.vuforiaLicenseKey = VUFORIA_KEY;
-        vuforiaParameters.cameraName = webcam1;
-        vuforia = ClassFactory.getInstance().createVuforia(vuforiaParameters);
-
-        targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
-        allTrackables = new ArrayList<>();
-        allTrackables.addAll(targetsUltimateGoal);
-
-        for (VuforiaTrackable trackable : allTrackables) {
-            ((VuforiaTrackableDefaultListener)trackable.getListener()).setPhoneInformation(robotFromCamera, vuforiaParameters.cameraDirection);
-        }
-
-        targetsUltimateGoal.activate();
-
-        targetVisible = false;
-        distanceFromImage = 0.0;*/
-
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
@@ -206,52 +152,41 @@ public abstract class AutoBase extends OpMode {
     }
 
     public void loop() {
-        leftFrontPower = 0;
-        leftBackPower = 0;
-        rightFrontPower = 0;
-        rightBackPower = 0;
-
-        getAngleError();
-
-        switch (currentCommand.commandType) {
-            case MOVE:
+        switch (currentCommand.getClass().getName()) {
+            case "Move":
                 holonomicDrive();
                 break;
 
-            case TURN:
+            case "Turn":
                 turn();
                 break;
 
-            case BLUE_RED:
+            case "BlueRed":
                 blueOrRed();
                 break;
 
-            case WAIT:
+            case "Wait":
                 pause();
                 break;
 
-            case ARM_EXTENSION:
-                armExtension();
+            case "ArmExtend":
+                armExtend();
                 break;
 
-            case ARM_ROTATION:
-                armRotation();
+            case "ArmRotate":
+                armRotate();
                 break;
 
-            case DUCKS:
+            case "Ducks":
                 ducks();
                 break;
 
-            case DETECT_DUCK_POSITION:
+            case "DetectDuckPosition":
                 detectDuckPosition();
                 break;
 
-            case LOAD_DUCK_COMMANDS:
+            case "LoadDuckCommands":
                 loadDuckCommands();
-                break;
-
-            case NONE:
-                startNextCommand();
                 break;
         }
 
@@ -262,28 +197,31 @@ public abstract class AutoBase extends OpMode {
         telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
         telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
         telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
+
+        if(commandFirstLoop)
+            commandFirstLoop = false;
     }
 
-    private void armRotation() {
-        armRotator.setTargetPosition(currentCommand.armRotation);
+    private void armRotate() {
+        armRotator.setTargetPosition(currentCommand.position);
     }
 
-    private void armExtension() {
-        armExtender.setTargetPosition(currentCommand.armExtension);
+    private void armExtend() {
+        armExtender.setTargetPosition(currentCommand.position);
     }
 
     private void loadDuckCommands() {
         switch (barcodePos) {
             case LEFT:
-                newCommands = currentCommand.leftCommands;
+                newCommands(currentCommand.leftCommands);
                 break;
 
             case CENTER:
-                newCommands = currentCommand.centerCommands;
+                newCommands(currentCommand.centerCommands);
                 break;
 
             case RIGHT:
-                newCommands = currentCommand.rightCommands;
+                newCommands(currentCommand.rightCommands);
                 break;
         }
     }
@@ -291,10 +229,10 @@ public abstract class AutoBase extends OpMode {
     private void blueOrRed() {
         switch (allianceColor) {
             case BLUE:
-                newCommands = currentCommand.blueCommands;
+                newCommands(currentCommand.blueCommands);
                 break;
             case RED:
-                newCommands = currentCommand.redCommands;
+                newCommands(currentCommand.redCommands);
                 break;
         }
         startNextCommand();
@@ -306,7 +244,7 @@ public abstract class AutoBase extends OpMode {
     public void ducks() {
         ducksOn = !ducksOn;
         if (ducksOn) {
-            duckServo.setPosition(0.5 + AUTO_DUCK_SPEED * allianceColor.direction);
+            duckServo.setPosition((0.5 - AUTO_DUCK_SPEED * allianceColor.direction) / 2);
         } else {
             duckServo.setPosition(.5);
         }
@@ -359,10 +297,8 @@ public abstract class AutoBase extends OpMode {
       */
     private void turn() {
         if(commandFirstLoop) {
-            commandFirstLoop = false;
             targetAngle = currentCommand.angle * allianceColor.direction;
-            angleError = targetAngle - currentRobotAngle;
-            angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
+            getAngleError();
         }
         if(Math.abs(angleError) < ANGLE_ERROR_TOLERANCE) {
             startNextCommand();
@@ -387,6 +323,8 @@ public abstract class AutoBase extends OpMode {
      * Corrects the target positions and powers of the wheels based on the angle error.
      */
     private void gyroCorrection() {
+        getAngleError();
+
         leftFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         leftBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         rightFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
@@ -411,6 +349,11 @@ public abstract class AutoBase extends OpMode {
         leftBack.setPower(leftBackPower);
         rightFront.setPower(rightFrontPower);
         rightBack.setPower(rightBackPower);
+
+        leftFrontPower = 0;
+        leftBackPower = 0;
+        rightFrontPower = 0;
+        rightBackPower = 0;
     }
 
     /**
@@ -428,13 +371,11 @@ public abstract class AutoBase extends OpMode {
     /**
      * If there are new commands, saves the current commands, and replaces them with the new ones.
      */
-    private void newCommands() {
-        if(newCommands != null) {
-            upstreamCommands.add(0, currentCommands);
-            upstreamCommandIndexes.add(0, currentCommandIndex);
+    private void newCommands(ArrayList<Command> newCommands) {
+        if(!newCommands.isEmpty()) {
+            if(!currentCommands.isEmpty())
+                upstreamCommands.add(0, currentCommands);
             currentCommands = newCommands;
-            currentCommandIndex = 0;
-            newCommands = null;
         }
     }
 
@@ -443,38 +384,23 @@ public abstract class AutoBase extends OpMode {
      * saved commands and goes through them in a first in last out sequence.
      */
     private void startNextCommand() {
-        currentCommandIndex++;
-        newCommands();
-        if (currentCommandIndex < currentCommands.size()) {
-            currentCommand = currentCommands.get(currentCommandIndex);
-            leftFrontPower = 0;
-            leftBackPower = 0;
-            rightFrontPower = 0;
-            rightBackPower = 0;
+        if (!currentCommands.isEmpty()) {
+            currentCommand = currentCommands.get(0);
+            currentCommands.remove(0);
             commandFirstLoop = true;
             resetStartTime();
-        } else if (upstreamCommands.size() != 0) {
+        } else if (!upstreamCommands.isEmpty()) {
             currentCommands = upstreamCommands.get(0);
             upstreamCommands.remove(0);
-            currentCommandIndex = upstreamCommandIndexes.get(0);
-            upstreamCommandIndexes.remove(0);
-
-            if (currentCommandIndex < currentCommands.size()) {
-                currentCommand = currentCommands.get(currentCommandIndex);
-                leftFrontPower = 0;
-                leftBackPower = 0;
-                rightFrontPower = 0;
-                rightBackPower = 0;
-                commandFirstLoop = true;
-                resetStartTime();
-            }
-        } else {
+            currentCommand = currentCommands.get(0);
+            currentCommands.remove(0);
+            commandFirstLoop = true;
             resetStartTime();
-            if(time > 1) requestOpModeStop();
+        } else {
+            requestOpModeStop();
         }
     }
 
     protected abstract AllianceColor getAllianceColor();
     protected abstract ArrayList<Command> getCommands();
-
 }
