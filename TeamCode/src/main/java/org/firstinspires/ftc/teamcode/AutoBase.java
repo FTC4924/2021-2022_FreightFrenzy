@@ -39,7 +39,10 @@ public abstract class AutoBase extends OpMode {
     private DcMotor rightFront;
     private DcMotor rightBack;
 
-    private Servo duckServo;
+    private DcMotor armRotator;
+    private DcMotor armExtender;
+
+    private Servo duckWheel;
 
     private double leftFrontTargetPosition;
     private double leftBackTargetPosition;
@@ -50,9 +53,6 @@ public abstract class AutoBase extends OpMode {
     private double leftBackPower;
     private double rightFrontPower;
     private double rightBackPower;
-
-    private DcMotor armRotator;
-    private DcMotor armExtender;
 
     private BNO055IMU imu;
     private Orientation angles;
@@ -98,7 +98,7 @@ public abstract class AutoBase extends OpMode {
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        duckServo = hardwareMap.get(Servo.class, "duckServo");
+        duckWheel = hardwareMap.get(Servo.class, "duckWheel");
 
         leftFrontTargetPosition = 0.0;
         leftBackTargetPosition = 0.0;
@@ -193,22 +193,23 @@ public abstract class AutoBase extends OpMode {
         telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
         telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
 
-        if(commandFirstLoop)
-            commandFirstLoop = false;
+        if(commandFirstLoop) commandFirstLoop = false;
     }
 
     private void armRotate() {
         if(commandFirstLoop)
             armRotator.setTargetPosition(currentCommand.position);
-        if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE)
-            startNextCommand();
+        if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
+        }
     }
 
     private void armExtend() {
         if(commandFirstLoop)
             armExtender.setTargetPosition(currentCommand.position);
-        if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE)
-            startNextCommand();
+        if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
+        }
     }
 
     private void loadDuckCommands() {
@@ -225,7 +226,7 @@ public abstract class AutoBase extends OpMode {
                 newCommands(currentCommand.rightCommands);
                 break;
         }
-        startNextCommand();
+        nextCommand();
     }
 
     private void blueOrRed() {
@@ -237,7 +238,7 @@ public abstract class AutoBase extends OpMode {
                 newCommands(currentCommand.redCommands);
                 break;
         }
-        startNextCommand();
+        nextCommand();
     }
 
     /**
@@ -246,11 +247,11 @@ public abstract class AutoBase extends OpMode {
     public void ducks() {
         ducksOn = !ducksOn;
         if (ducksOn) {
-            duckServo.setPosition((0.5 - AUTO_DUCK_SPEED * allianceColor.direction) / 2);
+            duckWheel.setPosition((0.5 - AUTO_DUCK_SPEED * allianceColor.direction) / 2);
         } else {
-            duckServo.setPosition(.5);
+            duckWheel.setPosition(.5);
         }
-        startNextCommand();
+        nextCommand();
     }
 
     /**
@@ -274,8 +275,8 @@ public abstract class AutoBase extends OpMode {
 
             leftFrontTargetPosition += -mainDiagonalTargetPosition;
             rightBackTargetPosition += mainDiagonalTargetPosition;
-            rightFrontTargetPosition += antiDiagonalTargetPosition;
-            leftBackTargetPosition += -antiDiagonalTargetPosition;
+            rightFrontTargetPosition += -antiDiagonalTargetPosition;
+            leftBackTargetPosition += antiDiagonalTargetPosition;
 
             leftFrontPower = mainDiagonalPercent * -currentCommand.power;
             rightBackPower = mainDiagonalPercent * currentCommand.power;
@@ -285,8 +286,9 @@ public abstract class AutoBase extends OpMode {
         if (Math.abs(leftFrontTargetPosition - leftFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
             Math.abs(leftBackTargetPosition - leftBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
             Math.abs(rightFrontTargetPosition - rightFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(rightBackTargetPosition - rightBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE)
-            startNextCommand();
+            Math.abs(rightBackTargetPosition - rightBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
+        }
     }
 
     /**
@@ -297,24 +299,18 @@ public abstract class AutoBase extends OpMode {
             targetAngle = currentCommand.angle * allianceColor.direction;
             getAngleError();
         }
-        if(Math.abs(angleError) < ANGLE_ERROR_TOLERANCE) {
-            startNextCommand();
-        }
+        if(Math.abs(angleError) < ANGLE_ERROR_TOLERANCE) nextCommand();
     }
 
     /**
      * Waits for a time. Could not use wait() because it is used in the base Java language.
      */
-    private void pause() {
-        if(time > currentCommand.duration) {
-            startNextCommand();
-        }
-    }
+    private void pause() { if(time > currentCommand.duration) nextCommand(); }
 
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
         webcam.stopStreaming();
-        startNextCommand();
+        nextCommand();
     }
 
     /**
@@ -359,11 +355,10 @@ public abstract class AutoBase extends OpMode {
      */
     private void getAngleError() {
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, RADIANS);
-        //currentRobotAngle = angles.firstAngle;
         currentRobotAngle = angles.firstAngle + allianceColor.angleOffset;
         angleError = targetAngle - currentRobotAngle;
+        //true modulo rather than just getting the remainder (different with negative numbers)
         angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
-        telemetry.addData("Angle Error", angleError);
     }
 
     /**
@@ -381,7 +376,7 @@ public abstract class AutoBase extends OpMode {
      * Starts the next command in the sequence. If there are no commands left, checks if there are
      * saved commands and goes through them in a first in last out sequence.
      */
-    private void startNextCommand() {
+    private void nextCommand() {
         if (!currentCommands.isEmpty()) {
             currentCommand = currentCommands.get(0);
             currentCommands.remove(0);
@@ -390,10 +385,7 @@ public abstract class AutoBase extends OpMode {
         } else if (!upstreamCommands.isEmpty()) {
             currentCommands = upstreamCommands.get(0);
             upstreamCommands.remove(0);
-            currentCommand = currentCommands.get(0);
-            currentCommands.remove(0);
-            commandFirstLoop = true;
-            resetStartTime();
+            nextCommand();
         } else {
             requestOpModeStop();
         }
