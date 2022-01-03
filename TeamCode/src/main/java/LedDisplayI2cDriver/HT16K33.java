@@ -250,6 +250,7 @@ public class HT16K33 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         if(x >= DISPLAY_WIDTH || y >= DISPLAY_HEIGHT || x < 0 || y < 0) { return; }
         switch(currentRotation) {
             case 1:
+                //noinspection SuspiciousNameCombination
                 x += y - (y = x);
                 x = (byte)(DISPLAY_WIDTH - x - 1);
                 break;
@@ -258,6 +259,7 @@ public class HT16K33 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
                 y = (byte)(DISPLAY_HEIGHT - y - 1);
                 break;
             case 3:
+                //noinspection SuspiciousNameCombination
                 x += y - (y = x);
                 y = (byte)(DISPLAY_HEIGHT - y - 1);
                 break;

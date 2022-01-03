@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import org.firstinspires.ftc.teamcode.Command;
-
 /**
  * Command for activating and deactivating the duck wheel.
  */

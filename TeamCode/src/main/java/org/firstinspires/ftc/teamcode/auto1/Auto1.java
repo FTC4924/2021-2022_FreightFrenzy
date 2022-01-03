@@ -7,8 +7,6 @@ import org.firstinspires.ftc.teamcode.Commands.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import static org.firstinspires.ftc.teamcode.Constants.CommandType.*;
-
 
 public abstract class Auto1 extends AutoBase {
     protected abstract AllianceColor getAllianceColor();
@@ -38,7 +36,8 @@ public abstract class Auto1 extends AutoBase {
                                         Arrays.asList(
                                                 new Command(MOVE,0.5, -90, .5)
                                         )
-                                ))
+                                )
+                        )*/
                 )
         );
     }

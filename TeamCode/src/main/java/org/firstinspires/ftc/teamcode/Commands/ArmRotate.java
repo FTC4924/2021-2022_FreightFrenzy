@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import org.firstinspires.ftc.teamcode.Command;
+import static org.firstinspires.ftc.teamcode.Constants.MAX_ARM_ROTATION;
 
 public class ArmRotate extends Command {
-    public ArmRotate(int position) {
-        this.position = position;
+    public ArmRotate(double percent) {
+        this.position = (int)(percent * MAX_ARM_ROTATION);
     }
 }

@@ -1,9 +1,9 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import org.firstinspires.ftc.teamcode.Command;
+import static org.firstinspires.ftc.teamcode.Constants.MAX_ARM_EXTENSION;
 
 public class ArmExtend extends Command {
-    public ArmExtend(int position) {
-        this.position = position;
+    public ArmExtend(double percent) {
+        this.position = (int)(percent * MAX_ARM_EXTENSION);
     }
 }

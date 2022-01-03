@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import org.firstinspires.ftc.teamcode.Command;
-
 /**
  * Command that uses the
  * <a href="#{@link}">{@link org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline}</a>
