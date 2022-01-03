@@ -29,7 +29,7 @@ public abstract class AutoDucks extends AutoBase {
                                 )
                         ),
                         new Ducks(),
-                        new Wait(6),
+                        new Pause(6),
                         new Ducks(),
                         new Move(1.8, -10, 1)
                 )

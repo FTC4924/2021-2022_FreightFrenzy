@@ -41,7 +41,6 @@ public abstract class AutoBase extends OpMode {
 
     private Servo duckServo;
 
-    private double targetPosition;
     private double leftFrontTargetPosition;
     private double leftBackTargetPosition;
     private double rightFrontTargetPosition;
@@ -101,7 +100,6 @@ public abstract class AutoBase extends OpMode {
 
         duckServo = hardwareMap.get(Servo.class, "duckServo");
 
-        targetPosition = 0.0;
         leftFrontTargetPosition = 0.0;
         leftBackTargetPosition = 0.0;
         rightFrontTargetPosition = 0.0;
@@ -130,17 +128,14 @@ public abstract class AutoBase extends OpMode {
 
         webcam.setPipeline(new DuckDetectionPipeline());
         webcam.setMillisecondsPermissionTimeout(2500);
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
-            public void onOpened()
-            {
+            public void onOpened() {
                 webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.SIDEWAYS_RIGHT);
                 telemetry.addData("Webcam", "Setup Finished");
             }
            
-            public void onError(int errorCode)
-            {
+            public void onError(int errorCode) {
                 telemetry.speak("The web cam wasn't initialised correctly! Error code: " + errorCode);
                 telemetry.addData("Webcam", "Setup Failed! Error code: " + errorCode);
             }
@@ -165,7 +160,7 @@ public abstract class AutoBase extends OpMode {
                 blueOrRed();
                 break;
 
-            case "Wait":
+            case "Pause":
                 pause();
                 break;
 
@@ -203,11 +198,17 @@ public abstract class AutoBase extends OpMode {
     }
 
     private void armRotate() {
-        armRotator.setTargetPosition(currentCommand.position);
+        if(commandFirstLoop)
+            armRotator.setTargetPosition(currentCommand.position);
+        if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE)
+            startNextCommand();
     }
 
     private void armExtend() {
-        armExtender.setTargetPosition(currentCommand.position);
+        if(commandFirstLoop)
+            armExtender.setTargetPosition(currentCommand.position);
+        if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE)
+            startNextCommand();
     }
 
     private void loadDuckCommands() {
@@ -224,6 +225,7 @@ public abstract class AutoBase extends OpMode {
                 newCommands(currentCommand.rightCommands);
                 break;
         }
+        startNextCommand();
     }
 
     private void blueOrRed() {
@@ -256,44 +258,39 @@ public abstract class AutoBase extends OpMode {
      */
     public void holonomicDrive() {
         if (commandFirstLoop) {
+            double targetPosition = currentCommand.distance * TICKS_PER_FOOT;
+            /*Subtracts the robot's current angle from the command angle so that it travels globally
+            rather than relative to the robot, then rotates it 45 degrees so that the components align
+            with the wheels*/
+            double holonomicAngle = currentCommand.angle * allianceColor.direction + currentRobotAngle + (Math.PI / 4);
 
-            targetPosition = currentCommand.distance * TICKS_PER_FOOT;
+            //the main diagonal is the diagonal from top left to bottom right
+            double mainDiagonalPercent = Math.cos(holonomicAngle);
+            //the anti-diagonal is the diagonal from topRight to bottomLeft
+            double antiDiagonalPercent = Math.sin(holonomicAngle);
 
-            double leftTargetPositionCalculation = targetPosition * Math.cos(currentCommand.angle * allianceColor.direction + (Math.PI / 4) - currentRobotAngle);
-            double rightTargetPositionCalculation = targetPosition * Math.sin(currentCommand.angle * allianceColor.direction + (Math.PI / 4) - currentRobotAngle);
+            double mainDiagonalTargetPosition = targetPosition * mainDiagonalPercent;
+            double antiDiagonalTargetPosition = targetPosition * antiDiagonalPercent;
 
-            leftFrontTargetPosition += (leftTargetPositionCalculation * -1);
-            leftBackTargetPosition += (rightTargetPositionCalculation * -1);
-            rightFrontTargetPosition += (rightTargetPositionCalculation);
-            rightBackTargetPosition += (leftTargetPositionCalculation);
+            leftFrontTargetPosition += -mainDiagonalTargetPosition;
+            rightBackTargetPosition += mainDiagonalTargetPosition;
+            rightFrontTargetPosition += antiDiagonalTargetPosition;
+            leftBackTargetPosition += -antiDiagonalTargetPosition;
 
-            commandFirstLoop = false;
+            leftFrontPower = mainDiagonalPercent * -currentCommand.power;
+            rightBackPower = mainDiagonalPercent * currentCommand.power;
+            rightFrontPower = antiDiagonalPercent * -currentCommand.power;
+            leftBackPower = antiDiagonalPercent * currentCommand.power;
         }
-
-        /*Determines what power each wheel should get based on the angle we get from the stick
-        plus the current robot angle so that the controls are independent of what direction the
-        robot is facing*/
-        leftFrontPower = Math.cos(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle)*-1;
-        leftBackPower = Math.sin(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle)*-1;
-        rightFrontPower = Math.sin(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle);
-        rightBackPower = Math.cos(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle);
-
-        // Adjusts motor speed.
-        leftFrontPower *= currentCommand.power;
-        leftBackPower *= currentCommand.power;
-        rightFrontPower *= currentCommand.power;
-        rightBackPower *= currentCommand.power;
-
-        if (Math.abs(leftFront.getCurrentPosition() - leftFrontTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(leftBack.getCurrentPosition() - leftBackTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(rightFront.getCurrentPosition() - rightFrontTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(rightBack.getCurrentPosition() - rightBackTargetPosition) <= ENCODER_POSITION_TOLERANCE) {
+        if (Math.abs(leftFrontTargetPosition - leftFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(leftBackTargetPosition - leftBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(rightFrontTargetPosition - rightFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(rightBackTargetPosition - rightBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE)
             startNextCommand();
-        }
     }
 
     /**
-     * Turns using the encoder positions.
+     * changes the robot's targetAngle
       */
     private void turn() {
         if(commandFirstLoop) {
@@ -316,6 +313,7 @@ public abstract class AutoBase extends OpMode {
 
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
+        webcam.stopStreaming();
         startNextCommand();
     }
 
