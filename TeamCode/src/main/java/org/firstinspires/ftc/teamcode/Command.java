@@ -1,9 +1,6 @@
-package org.firstinspires.ftc.teamcode.Commands;
-
+package org.firstinspires.ftc.teamcode;
 
 import java.util.ArrayList;
-
-import static org.firstinspires.ftc.teamcode.Constants.CommandType;
 
 /**
  * Created by Brendan Clark on 09/24/2020 at 11:54 AM.
@@ -20,7 +17,6 @@ public class Command {
     public double distance = 0;
     public double angle = 0;
     public double power = 0;
-    public int position = 0;
+    public int position;
 
-    public Command() {}
 }

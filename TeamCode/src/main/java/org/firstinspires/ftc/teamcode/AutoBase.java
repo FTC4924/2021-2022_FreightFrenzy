@@ -1,21 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.util.Log;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.matrices.OpenGLMatrix;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackable;
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaTrackables;
-import org.firstinspires.ftc.teamcode.Commands.Command;
 import org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -23,7 +16,6 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 import org.openftc.easyopencv.OpenCvWebcam;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import LedDisplayI2cDriver.HT16K33;
 
@@ -38,12 +30,10 @@ import static org.firstinspires.ftc.teamcode.Constants.*;
 public abstract class AutoBase extends OpMode {
 
     protected static AllianceColor allianceColor;
+
     private ArrayList<Command> currentCommands;
-    private ArrayList<Command> newCommands;
     private ArrayList<ArrayList<Command>> upstreamCommands;
     private Command currentCommand;
-    private int currentCommandIndex;
-    private ArrayList<Integer> upstreamCommandIndexes;
     private boolean commandFirstLoop;
 
     private DcMotor leftFront;
@@ -51,9 +41,11 @@ public abstract class AutoBase extends OpMode {
     private DcMotor rightFront;
     private DcMotor rightBack;
 
-    private Servo duckServo;
+    private DcMotor armRotator;
+    private DcMotor armExtender;
 
-    private double targetPosition;
+    private Servo duckWheel;
+
     private double leftFrontTargetPosition;
     private double leftBackTargetPosition;
     private double rightFrontTargetPosition;
@@ -64,31 +56,12 @@ public abstract class AutoBase extends OpMode {
     private double rightFrontPower;
     private double rightBackPower;
 
-    private DcMotor armRotator;
-    private DcMotor armExtender;
-
     private BNO055IMU imu;
     private Orientation angles;
 
     private double currentRobotAngle;
     private static double targetAngle;
     private double angleError;
-
-    private OpenGLMatrix robotFromCamera;
-    private OpenGLMatrix robotLocationTransform;
-    private OpenGLMatrix lastLocation;
-
-    private int cameraMonitorViewId;
-
-    private WebcamName webcam1;
-    private VuforiaLocalizer.Parameters vuforiaParameters;
-    private VuforiaLocalizer vuforia;
-
-    private VuforiaTrackables targetsUltimateGoal;
-    private List<VuforiaTrackable> allTrackables;
-
-    private boolean targetVisible;
-    private double distanceFromImage;
 
     private OpenCvWebcam webcam;
 
@@ -101,11 +74,8 @@ public abstract class AutoBase extends OpMode {
     public void init() {
         allianceColor = getAllianceColor();
         currentCommands = getCommands();
-        newCommands = null;
         upstreamCommands = new ArrayList<>();
         currentCommand = currentCommands.get(0);
-        currentCommandIndex = 0;
-        upstreamCommandIndexes = new ArrayList<>();
         commandFirstLoop = true;
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -138,9 +108,8 @@ public abstract class AutoBase extends OpMode {
         armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armExtender.setPower(.5);
 
-        duckServo = hardwareMap.get(Servo.class, "duckServo");
+        duckWheel = hardwareMap.get(Servo.class, "duckWheel");
 
-        targetPosition = 0.0;
         leftFrontTargetPosition = 0.0;
         leftBackTargetPosition = 0.0;
         rightFrontTargetPosition = 0.0;
@@ -164,49 +133,19 @@ public abstract class AutoBase extends OpMode {
         targetAngle = 0.0;
         angleError = 0.0;
 
-        /*robotFromCamera = OpenGLMatrix
-                .translation(CAMERA_FORWARD_DISPLACEMENT, CAMERA_LEFT_DISPLACEMENT, CAMERA_VERTICAL_DISPLACEMENT)
-                .multiplied(Orientation.getRotationMatrix(EXTRINSIC, YZX, RADIANS, CAMERA_X_ROTATE, CAMERA_Y_ROTATE, CAMERA_Z_ROTATE));
-        lastLocation = null;
-        robotLocationTransform = null;
-
-        cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-
-        webcam1 = hardwareMap.get(WebcamName.class, "Webcam 1");
-        vuforiaParameters = new VuforiaLocalizer.Parameters(cameraMonitorViewId);
-        vuforiaParameters.vuforiaLicenseKey = VUFORIA_KEY;
-        vuforiaParameters.cameraName = webcam1;
-        vuforia = ClassFactory.getInstance().createVuforia(vuforiaParameters);
-
-        targetsUltimateGoal = this.vuforia.loadTrackablesFromAsset("UltimateGoal");
-        allTrackables = new ArrayList<>();
-        allTrackables.addAll(targetsUltimateGoal);
-
-        for (VuforiaTrackable trackable : allTrackables) {
-            ((VuforiaTrackableDefaultListener)trackable.getListener()).setPhoneInformation(robotFromCamera, vuforiaParameters.cameraDirection);
-        }
-
-        targetsUltimateGoal.activate();
-
-        targetVisible = false;
-        distanceFromImage = 0.0;*/
-
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
         webcam.setPipeline(new DuckDetectionPipeline());
         webcam.setMillisecondsPermissionTimeout(2500);
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
+        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
-            public void onOpened()
-            {
+            public void onOpened() {
                 webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.SIDEWAYS_RIGHT);
                 telemetry.addData("Webcam", "Setup Finished");
             }
            
-            public void onError(int errorCode)
-            {
+            public void onError(int errorCode) {
                 telemetry.speak("The web cam wasn't initialised correctly! Error code: " + errorCode);
                 telemetry.addData("Webcam", "Setup Failed! Error code: " + errorCode);
             }
@@ -221,111 +160,100 @@ public abstract class AutoBase extends OpMode {
     }
 
     public void loop() {
-        try {
-            leftFrontPower = 0;
-            leftBackPower = 0;
-            rightFrontPower = 0;
-            rightBackPower = 0;
+        switch (currentCommand.getClass().getName()) {
+            case "Move":
+                holonomicDrive();
+                break;
 
-            getAngleError();
+            case "Turn":
+                turn();
+                break;
 
-            switch (currentCommand.commandType) {
-                case MOVE:
-                    holonomicDrive();
-                    break;
+            case "BlueRed":
+                blueOrRed();
+                break;
 
-                case TURN:
-                    turn();
-                    break;
+            case "Pause":
+                pause();
+                break;
 
-                case BLUE_RED:
-                    blueOrRed();
-                    break;
+            case "ArmExtend":
+                armExtend();
+                break;
 
-                case WAIT:
-                    pause();
-                    break;
+            case "ArmRotate":
+                armRotate();
+                break;
 
-                case ARM_EXTEND:
-                    armExtension();
-                    break;
+            case "Ducks":
+                ducks();
+                break;
 
-                case ARM_ROTATE:
-                    armRotation();
-                    break;
+            case "DetectDuckPosition":
+                detectDuckPosition();
+                break;
 
-                case DUCKS:
-                    ducks();
-                    break;
-
-                case DETECT_DUCK_POSITION:
-                    detectDuckPosition();
-                    break;
-
-                case LOAD_DUCK_COMMANDS:
-                    loadDuckCommands();
-                    break;
-
-                case NONE:
-                    startNextCommand();
-                    break;
-            }
-
-            gyroCorrection();
-
-            setWheelPowersAndPositions();
-
-            display.writeDisplay();
-
-            telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
-            telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
-            telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
-            telemetry.addData("targetAngle", targetAngle);
+            case "LoadDuckCommands":
+                loadDuckCommands();
+                break;
         }
-        catch (Exception e) {
-            Log.e("AutoBase", "loop: ", e);
-            throw e;
+
+        gyroCorrection();
+
+        setWheelPowersAndPositions();
+
+        display.writeDisplay();
+
+        telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
+        telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
+        telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
+
+        if(commandFirstLoop) commandFirstLoop = false;
+    }
+
+    private void armRotate() {
+        if(commandFirstLoop)
+            armRotator.setTargetPosition(currentCommand.position);
+        if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
         }
     }
 
-    private void armRotation() {
-        armRotator.setTargetPosition(currentCommand.position);
-        if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < 20)
-            startNextCommand();
-    }
-
-    private void armExtension() {
-        armExtender.setTargetPosition(currentCommand.position);
-        if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < 20)
-            startNextCommand();
+    private void armExtend() {
+        if(commandFirstLoop)
+            armExtender.setTargetPosition(currentCommand.position);
+        if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
+        }
     }
 
     private void loadDuckCommands() {
         switch (barcodePos) {
             case LEFT:
-                newCommands = currentCommand.leftCommands;
+                newCommands(currentCommand.leftCommands);
                 break;
 
             case CENTER:
-                newCommands = currentCommand.centerCommands;
+                newCommands(currentCommand.centerCommands);
                 break;
 
             case RIGHT:
-                newCommands = currentCommand.rightCommands;
+                newCommands(currentCommand.rightCommands);
                 break;
         }
+        nextCommand();
     }
 
     private void blueOrRed() {
         switch (allianceColor) {
             case BLUE:
-                newCommands = currentCommand.blueCommands;
+                newCommands(currentCommand.blueCommands);
                 break;
             case RED:
-                newCommands = currentCommand.redCommands;
+                newCommands(currentCommand.redCommands);
                 break;
         }
-        startNextCommand();
+        nextCommand();
     }
 
     /**
@@ -334,11 +262,11 @@ public abstract class AutoBase extends OpMode {
     public void ducks() {
         ducksOn = !ducksOn;
         if (ducksOn) {
-            duckServo.setPosition(0.5 + AUTO_DUCK_SPEED * allianceColor.direction);
+            duckWheel.setPosition((0.5 - AUTO_DUCK_SPEED * allianceColor.direction) / 2);
         } else {
-            duckServo.setPosition(.5);
+            duckWheel.setPosition(.5);
         }
-        startNextCommand();
+        nextCommand();
     }
 
     /**
@@ -346,39 +274,35 @@ public abstract class AutoBase extends OpMode {
      */
     public void holonomicDrive() {
         if (commandFirstLoop) {
+            double targetPosition = currentCommand.distance * TICKS_PER_FOOT;
+            /*Subtracts the robot's current angle from the command angle so that it travels globally
+            rather than relative to the robot, then rotates it 45 degrees so that the components align
+            with the wheels*/
+            double holonomicAngle = currentCommand.angle * allianceColor.direction + currentRobotAngle + (Math.PI / 4);
 
-            targetPosition = currentCommand.distance * TICKS_PER_FOOT;
+            //the main diagonal is the diagonal from top left to bottom right
+            double mainDiagonalPercent = Math.cos(holonomicAngle);
+            //the anti-diagonal is the diagonal from topRight to bottomLeft
+            double antiDiagonalPercent = Math.sin(holonomicAngle);
 
-            double leftTargetPositionCalculation = targetPosition * Math.cos(currentCommand.angle * allianceColor.direction + (Math.PI / 4) - currentRobotAngle);
-            double rightTargetPositionCalculation = targetPosition * Math.sin(currentCommand.angle * allianceColor.direction + (Math.PI / 4) - currentRobotAngle);
+            double mainDiagonalTargetPosition = targetPosition * mainDiagonalPercent;
+            double antiDiagonalTargetPosition = targetPosition * antiDiagonalPercent;
 
-            leftFrontTargetPosition += (leftTargetPositionCalculation * -1);
-            leftBackTargetPosition += (rightTargetPositionCalculation * -1);
-            rightFrontTargetPosition += (rightTargetPositionCalculation);
-            rightBackTargetPosition += (leftTargetPositionCalculation);
+            leftFrontTargetPosition += -mainDiagonalTargetPosition;
+            rightBackTargetPosition += mainDiagonalTargetPosition;
+            rightFrontTargetPosition += -antiDiagonalTargetPosition;
+            leftBackTargetPosition += antiDiagonalTargetPosition;
 
-            commandFirstLoop = false;
+            leftFrontPower = mainDiagonalPercent * -currentCommand.power;
+            rightBackPower = mainDiagonalPercent * currentCommand.power;
+            rightFrontPower = antiDiagonalPercent * -currentCommand.power;
+            leftBackPower = antiDiagonalPercent * currentCommand.power;
         }
-
-        /*Determines what power each wheel should get based on the angle we get from the stick
-        plus the current robot angle so that the controls are independent of what direction the
-        robot is facing*/
-        leftFrontPower = Math.cos(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle)*-1;
-        leftBackPower = Math.sin(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle)*-1;
-        rightFrontPower = Math.sin(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle);
-        rightBackPower = Math.cos(currentCommand.angle * allianceColor.direction + (Math.PI/4) - currentRobotAngle);
-
-        // Adjusts motor speed.
-        leftFrontPower *= currentCommand.power;
-        leftBackPower *= currentCommand.power;
-        rightFrontPower *= currentCommand.power;
-        rightBackPower *= currentCommand.power;
-
-        if (Math.abs(leftFront.getCurrentPosition() - leftFrontTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(leftBack.getCurrentPosition() - leftBackTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(rightFront.getCurrentPosition() - rightFrontTargetPosition) <= ENCODER_POSITION_TOLERANCE &&
-            Math.abs(rightBack.getCurrentPosition() - rightBackTargetPosition) <= ENCODER_POSITION_TOLERANCE) {
-            startNextCommand();
+        if (Math.abs(leftFrontTargetPosition - leftFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(leftBackTargetPosition - leftBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(rightFrontTargetPosition - rightFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
+            Math.abs(rightBackTargetPosition - rightBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
         }
     }
 
@@ -387,34 +311,29 @@ public abstract class AutoBase extends OpMode {
       */
     private void turn() {
         if(commandFirstLoop) {
-            commandFirstLoop = false;
             targetAngle = currentCommand.angle * allianceColor.direction;
             getAngleError();
         }
-        if(Math.abs(angleError) < ANGLE_ERROR_TOLERANCE) {
-            startNextCommand();
-        }
+        if(Math.abs(angleError) < ANGLE_ERROR_TOLERANCE) nextCommand();
     }
 
     /**
      * Waits for a time. Could not use wait() because it is used in the base Java language.
      */
-    private void pause() {
-        if(time > currentCommand.duration) {
-            startNextCommand();
-        }
-    }
+    private void pause() { if(time > currentCommand.duration) nextCommand(); }
 
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
         display.drawCharacter(0, 0, barcodePos.name().charAt(0));
-        startNextCommand();
+        nextCommand();
     }
 
     /**
      * Corrects the target positions and powers of the wheels based on the angle error.
      */
     private void gyroCorrection() {
+        getAngleError();
+
         leftFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         leftBackTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
         rightFrontTargetPosition += angleError * TURNING_ENCODER_POSITION_SCALAR;
@@ -439,6 +358,11 @@ public abstract class AutoBase extends OpMode {
         leftBack.setPower(leftBackPower);
         rightFront.setPower(rightFrontPower);
         rightBack.setPower(rightBackPower);
+
+        leftFrontPower = 0;
+        leftBackPower = 0;
+        rightFrontPower = 0;
+        rightBackPower = 0;
     }
 
     /**
@@ -446,24 +370,20 @@ public abstract class AutoBase extends OpMode {
      */
     private void getAngleError() {
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, RADIANS);
-        //currentRobotAngle = angles.firstAngle;
         currentRobotAngle = angles.firstAngle + allianceColor.angleOffset;
         angleError = targetAngle - currentRobotAngle;
+        //true modulo rather than just getting the remainder (different with negative numbers)
         angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
-        telemetry.addData("Angle Error", angleError);
-        telemetry.addData("raw robot angle", angles.firstAngle);
     }
 
     /**
      * If there are new commands, saves the current commands, and replaces them with the new ones.
      */
-    private void newCommands() {
-        if(newCommands != null) {
-            upstreamCommands.add(0, currentCommands);
-            upstreamCommandIndexes.add(0, currentCommandIndex);
+    private void newCommands(ArrayList<Command> newCommands) {
+        if(!newCommands.isEmpty()) {
+            if(!currentCommands.isEmpty())
+                upstreamCommands.add(0, currentCommands);
             currentCommands = newCommands;
-            currentCommandIndex = 0;
-            newCommands = null;
         }
     }
 
@@ -471,35 +391,18 @@ public abstract class AutoBase extends OpMode {
      * Starts the next command in the sequence. If there are no commands left, checks if there are
      * saved commands and goes through them in a first in last out sequence.
      */
-    private void startNextCommand() {
-        currentCommandIndex++;
-        newCommands();
-        if (currentCommandIndex < currentCommands.size()) {
-            currentCommand = currentCommands.get(currentCommandIndex);
-            leftFrontPower = 0;
-            leftBackPower = 0;
-            rightFrontPower = 0;
-            rightBackPower = 0;
+    private void nextCommand() {
+        if (!currentCommands.isEmpty()) {
+            currentCommand = currentCommands.get(0);
+            currentCommands.remove(0);
             commandFirstLoop = true;
             resetStartTime();
-        } else if (upstreamCommands.size() != 0) {
+        } else if (!upstreamCommands.isEmpty()) {
             currentCommands = upstreamCommands.get(0);
             upstreamCommands.remove(0);
-            currentCommandIndex = upstreamCommandIndexes.get(0);
-            upstreamCommandIndexes.remove(0);
-
-            if (currentCommandIndex < currentCommands.size()) {
-                currentCommand = currentCommands.get(currentCommandIndex);
-                leftFrontPower = 0;
-                leftBackPower = 0;
-                rightFrontPower = 0;
-                rightBackPower = 0;
-                commandFirstLoop = true;
-                resetStartTime();
-            }
+            nextCommand();
         } else {
-            resetStartTime();
-            if(time > 1) requestOpModeStop();
+            requestOpModeStop();
         }
     }
 
@@ -515,5 +418,4 @@ public abstract class AutoBase extends OpMode {
 
     protected abstract AllianceColor getAllianceColor();
     protected abstract ArrayList<Command> getCommands();
-
 }

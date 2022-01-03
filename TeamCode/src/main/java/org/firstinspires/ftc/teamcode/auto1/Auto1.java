@@ -38,7 +38,7 @@ public abstract class Auto1 extends AutoBase {
                                         Arrays.asList(
                                                 new Command(MOVE,0.5, -90, .5)
                                         )
-                                ))*/
+                                ))
                 )
         );
     }

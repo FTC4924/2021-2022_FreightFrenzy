@@ -1,14 +1,10 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import static org.firstinspires.ftc.teamcode.Constants.CommandType.DUCKS;
+import org.firstinspires.ftc.teamcode.Command;
 
 /**
  * Command for activating and deactivating the duck wheel.
  */
 public class Ducks extends Command {
-    public Ducks() {
-        super(DUCKS);
-        this.redCommands = redCommands;
-        this.blueCommands = blueCommands;
-    }
+    public Ducks() {}
 }

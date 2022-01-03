@@ -1,14 +1,9 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import static org.firstinspires.ftc.teamcode.Constants.CommandType.ARM_EXTEND;
-import static org.firstinspires.ftc.teamcode.Constants.MAX_ARM_EXTENSION;
+import org.firstinspires.ftc.teamcode.Command;
 
-/**
- * Command for extending/retracting the arm to a percent of it's limit.
- */
 public class ArmExtend extends Command {
-    public ArmExtend(double percent) {
-        super(ARM_EXTEND);
-        this.position = (int)(percent * MAX_ARM_EXTENSION);
+    public ArmExtend(int position) {
+        this.position = position;
     }
 }

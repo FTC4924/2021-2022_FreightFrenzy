@@ -1,8 +1,8 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import java.util.ArrayList;
+import org.firstinspires.ftc.teamcode.Command;
 
-import static org.firstinspires.ftc.teamcode.Constants.CommandType.LOAD_DUCK_COMMANDS;
+import java.util.ArrayList;
 
 /**
  * Command that runs one set of commands based on the result of a previous call of
@@ -10,10 +10,9 @@ import static org.firstinspires.ftc.teamcode.Constants.CommandType.LOAD_DUCK_COM
  * @see DetectDuckPosition
  */
 public class LoadDuckCommands extends Command {
-    public LoadDuckCommands(ArrayList<Command> leftCommands, ArrayList<Command> centerCommands, ArrayList<Command> rightRingsCommands) {
-        super(LOAD_DUCK_COMMANDS);
+    public LoadDuckCommands(ArrayList<Command> leftCommands, ArrayList<Command> centerCommands, ArrayList<Command> rightCommands) {
         this.leftCommands = leftCommands;
         this.centerCommands = centerCommands;
-        this.rightCommands = rightRingsCommands;
+        this.rightCommands = rightCommands;
     }
 }

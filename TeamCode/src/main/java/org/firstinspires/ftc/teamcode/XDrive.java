@@ -1,22 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.visionpipelines.CameraRecordingPipeline;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraFactory;
-import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvWebcam;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
@@ -27,9 +19,6 @@ public abstract class XDrive extends OpMode {
 
     protected static AllianceColor allianceColor;
 
-    private FtcDashboard dashboard;
-    private Telemetry dashboardTelemetry;
-
     //Motors
     private DcMotor leftFront;
     private DcMotor leftBack;
@@ -37,8 +26,6 @@ public abstract class XDrive extends OpMode {
     private DcMotor rightBack;
     private DcMotor armRotator;
     private DcMotor armExtender;
-
-    private OpenCvWebcam webcam;
 
     //Servos
     private Servo duckServo;
@@ -52,10 +39,6 @@ public abstract class XDrive extends OpMode {
     private Orientation angles;
     private double angleOffset;
     private double currentRobotAngle;
-    private double targetAngle;
-    private double robotAngleError;
-
-    private double duckAccelerate;
 
     private boolean xPressed;
     private boolean yPressed;
@@ -65,13 +48,9 @@ public abstract class XDrive extends OpMode {
     private boolean duckOut;
     private boolean bristlesIn;
     private boolean bristlesOut;
-    private boolean resetArmEncoder;
+    private boolean limitSwitchPressed;
 
     public void init() {
-
-        dashboard = FtcDashboard.getInstance();
-        dashboardTelemetry = dashboard.getTelemetry();
-
         allianceColor = getAllianceColor();
 
         /*Instantiating the motor and servo objects as their appropriate motor/servo in the
@@ -94,7 +73,7 @@ public abstract class XDrive extends OpMode {
         digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
         digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
-        //Initializing the Revhub IMU
+        //Initializing the RevHub IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
@@ -106,33 +85,7 @@ public abstract class XDrive extends OpMode {
 
         angles = null;
         currentRobotAngle = 0.0;
-        targetAngle = 0.0;
         angleOffset = 0.0;
-
-        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
-
-        webcam.setPipeline(new CameraRecordingPipeline());
-        webcam.setMillisecondsPermissionTimeout(2500);
-        webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
-            @Override
-            public void onOpened()
-            {
-                CameraRecordingPipeline.webcam = webcam;
-                webcam.startStreaming(RESOLUTION_WIDTH, RESOLUTION_HEIGHT, OpenCvCameraRotation.SIDEWAYS_RIGHT);
-                telemetry.addData("Webcam", "Setup Finished");
-            }
-
-            public void onError(int errorCode)
-            {
-                telemetry.speak("The web cam wasn't initialised correctly! Error code: " + errorCode);
-                telemetry.addData("Webcam", "Setup Failed! Error code: " + errorCode);
-            }
-        });
-    }
-
-    public void start() {
     }
 
     public void loop() {
@@ -162,7 +115,6 @@ public abstract class XDrive extends OpMode {
     private void recalibrateGyro() {
         if(gamepad1.b) {
             angleOffset = angles.firstAngle;
-            targetAngle = 0.0;
         }
     }
 
@@ -176,11 +128,10 @@ public abstract class XDrive extends OpMode {
 
         double gamepad1LeftStickX = gamepad1.left_stick_x;
         double gamepad1LeftStickY = gamepad1.left_stick_y;
-        double gamepad1RightStickX = gamepad1.right_stick_x;
-        double gamepad1RightStickY = gamepad1.right_stick_y;
         double gamepad1LeftTrigger = gamepad1.left_trigger;
         double gamepad1RightTrigger = gamepad1.right_trigger;
-        robotAngleError = 0;
+
+        double angleError = 0.0;
 
         double leftFrontPower;
         double leftBackPower ;
@@ -192,21 +143,23 @@ public abstract class XDrive extends OpMode {
             //Uses atan2 to convert the x and y values of the controller to an angle
             double gamepad1LeftStickAngle = Math.atan2(gamepad1LeftStickY, gamepad1LeftStickX);
 
-            /*Determines what power each wheel should get based on the angle we get from the stick
-            plus the current robot angle so that the controls are independent of what direction the
-            robot is facing*/
-            leftFrontPower = Math.cos(gamepad1LeftStickAngle + Math.PI / 4 + currentRobotAngle) * -1;
-            leftBackPower = Math.sin(gamepad1LeftStickAngle + Math.PI / 4 + currentRobotAngle);
-            rightFrontPower = Math.sin(gamepad1LeftStickAngle + Math.PI / 4 + currentRobotAngle) * -1;
-            rightBackPower = Math.cos(gamepad1LeftStickAngle + Math.PI / 4 + currentRobotAngle);
+            /*Subtracts the robot's current angle from the command angle so that it travels globally
+            rather than relative to the robot, then rotates it 45 degrees so that the angle's components
+            align with the wheels*/
+            double holonomicAngle = gamepad1LeftStickAngle + currentRobotAngle + Math.PI / 4;
 
-            /*Uses the Y of the right stick to determine the speed of the robot's movement with 0
-            being 0.5 power*/
-            double rightYPower = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
-            leftFrontPower *= rightYPower;
-            leftBackPower *= rightYPower;
-            rightFrontPower *= rightYPower;
-            rightBackPower *= rightYPower;
+            //overall power based on how far the stick is from the center
+            double power = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
+
+            //the main diagonal is the diagonal from top left to bottom right
+            double mainDiagonalPercent = Math.cos(holonomicAngle);
+            //the anti-diagonal is the diagonal from topRight to bottomLeft
+            double antiDiagonalPercent = Math.sin(holonomicAngle);
+
+            leftFrontPower = mainDiagonalPercent * -power;
+            rightBackPower = mainDiagonalPercent * power;
+            rightFrontPower = antiDiagonalPercent * -power;
+            leftBackPower = antiDiagonalPercent * power;
 
         } else {
 
@@ -218,22 +171,16 @@ public abstract class XDrive extends OpMode {
         }
 
         if (gamepad1LeftTrigger >= CONTROLLER_TOLERANCE) {
-            //targetAngle += Math.toRadians(gamepad1LeftTrigger * TURNING_ANGLE_POSITION_SCALAR);
-
-            robotAngleError += Math.pow(gamepad1LeftTrigger, 2);
+            angleError += Math.pow(gamepad1LeftTrigger, 2);
         }
         if (gamepad1RightTrigger >= CONTROLLER_TOLERANCE) {
-            //targetAngle -= Math.toRadians(gamepad1RightTrigger * TURNING_ANGLE_POSITION_SCALAR);
-            robotAngleError -= Math.pow(gamepad1RightTrigger, 2);
+            angleError -= Math.pow(gamepad1RightTrigger, 2);
         }
 
-        //robotAngleError = targetAngle - currentRobotAngle;
-        //robotAngleError = ((((robotAngleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;
-
-        leftFrontPower += robotAngleError * TURNING_POWER_SCALAR;
-        leftBackPower += robotAngleError * TURNING_POWER_SCALAR;
-        rightFrontPower += robotAngleError * TURNING_POWER_SCALAR;
-        rightBackPower += robotAngleError * TURNING_POWER_SCALAR;
+        leftFrontPower += angleError * TURNING_POWER_SCALAR;
+        leftBackPower += angleError * TURNING_POWER_SCALAR;
+        rightFrontPower += angleError * TURNING_POWER_SCALAR;
+        rightBackPower += angleError * TURNING_POWER_SCALAR;
 
         //Sets the wheel powers
         leftFront.setPower(leftFrontPower);
@@ -318,7 +265,10 @@ public abstract class XDrive extends OpMode {
         // Controls the arm extender
         if (digitalTouch.getState()) {
             telemetry.addData("Digital Touch", "Pressed");
+        } else {
+            telemetry.addData("Digital Touch", "Not Pressed");
         }
+
         if (!digitalTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
             armExtender.setPower(gamepad2.right_stick_y / 2);
         } else if (armExtender.getCurrentPosition() > MAX_ARM_EXTENSION && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
@@ -326,19 +276,20 @@ public abstract class XDrive extends OpMode {
         } else {
             armExtender.setPower(0.0);
         }
+
         if (digitalTouch.getState()) {
-            if (!resetArmEncoder) {
-                resetArmEncoder = true;
+            if (!limitSwitchPressed) {
+                limitSwitchPressed = true;
                 armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             }
         } else {
-            if (resetArmEncoder) {
+            if (limitSwitchPressed) {
                 armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             }
-            resetArmEncoder = false;
+            limitSwitchPressed = false;
         }
         telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
         telemetry.addData("Arm Rotator", armRotator.getCurrentPosition());

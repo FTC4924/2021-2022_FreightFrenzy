@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import static org.firstinspires.ftc.teamcode.Constants.CommandType.DETECT_DUCK_POSITION;
+import org.firstinspires.ftc.teamcode.Command;
 
 /**
  * Command that uses the
@@ -8,8 +8,7 @@ import static org.firstinspires.ftc.teamcode.Constants.CommandType.DETECT_DUCK_P
  * to detect the barcode position of the duck.
  * @see org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline
  */
+
 public class DetectDuckPosition extends Command {
-    public DetectDuckPosition() {
-        super(DETECT_DUCK_POSITION);
-    }
+    public DetectDuckPosition() {}
 }
