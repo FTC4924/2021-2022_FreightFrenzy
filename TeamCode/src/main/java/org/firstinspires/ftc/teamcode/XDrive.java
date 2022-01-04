@@ -28,7 +28,7 @@ public abstract class XDrive extends OpMode {
     private DcMotor armExtender;
 
     //Servos
-    private Servo duckServo;
+    private Servo duckWheel;
     private Servo bristleServo;
 
     DigitalChannel digitalTouch;
@@ -67,7 +67,7 @@ public abstract class XDrive extends OpMode {
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        duckServo = hardwareMap.get(Servo.class, "duckServo");
+        duckWheel = hardwareMap.get(Servo.class, "duckWheel");
         bristleServo = hardwareMap.get(Servo.class, "bristleServo");
 
         digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
@@ -213,9 +213,9 @@ public abstract class XDrive extends OpMode {
         }
 
         if (duckIn) {
-            duckServo.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
+            duckWheel.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
         } else {
-            duckServo.setPosition(0.5);
+            duckWheel.setPosition(0.5);
         }
     }
 

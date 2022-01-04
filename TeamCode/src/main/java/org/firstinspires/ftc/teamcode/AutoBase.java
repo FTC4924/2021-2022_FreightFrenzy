@@ -47,6 +47,9 @@ public abstract class AutoBase extends OpMode {
 
     private Servo duckWheel;
 
+    double mainDiagonalPercent;
+    double antiDiagonalPercent;
+
     private double leftFrontTargetPosition;
     private double leftBackTargetPosition;
     private double rightFrontTargetPosition;
@@ -111,6 +114,9 @@ public abstract class AutoBase extends OpMode {
 
         duckWheel = hardwareMap.get(Servo.class, "duckWheel");
 
+        mainDiagonalPercent = 0;
+        antiDiagonalPercent = 0;
+
         leftFrontTargetPosition = 0.0;
         leftBackTargetPosition = 0.0;
         rightFrontTargetPosition = 0.0;
@@ -161,7 +167,8 @@ public abstract class AutoBase extends OpMode {
     }
 
     public void loop() {
-        switch (currentCommand.getClass().getName()) {
+        telemetry.addData("Current Command", currentCommand.getClass().getSimpleName());
+        switch (currentCommand.getClass().getSimpleName()) {
             case "Move":
                 holonomicDrive();
                 break;
@@ -197,32 +204,37 @@ public abstract class AutoBase extends OpMode {
             case "LoadDuckCommands":
                 loadDuckCommands();
                 break;
+
+            default:
+                telemetry.addData("Auto Base", "Couldn't find any matching case statements for command " + currentCommand.getClass().getSimpleName());
         }
 
         gyroCorrection();
 
         setWheelPowersAndPositions();
 
-        display.writeDisplay();
-
         telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
         telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
         telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
 
-        if(commandFirstLoop) commandFirstLoop = false;
+        display.writeDisplay();
     }
 
     private void armRotate() {
-        if(commandFirstLoop)
+        if(commandFirstLoop) {
+            commandFirstLoop = false;
             armRotator.setTargetPosition(currentCommand.position);
+        }
         if(Math.abs(currentCommand.position - armRotator.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
             nextCommand();
         }
     }
 
     private void armExtend() {
-        if(commandFirstLoop)
+        if(commandFirstLoop) {
+            commandFirstLoop = false;
             armExtender.setTargetPosition(currentCommand.position);
+        }
         if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
             nextCommand();
         }
@@ -275,30 +287,32 @@ public abstract class AutoBase extends OpMode {
      */
     public void holonomicDrive() {
         if (commandFirstLoop) {
+            commandFirstLoop = false;
             double targetPosition = currentCommand.distance * TICKS_PER_FOOT;
             /*Subtracts the robot's current angle from the command angle so that it travels globally
             rather than relative to the robot, then rotates it 45 degrees so that the components align
             with the wheels*/
-            double holonomicAngle = currentCommand.angle * allianceColor.direction + currentRobotAngle + (Math.PI / 4);
+            double holonomicAngle = currentCommand.angle * allianceColor.direction - currentRobotAngle + (Math.PI / 4);
 
             //the main diagonal is the diagonal from top left to bottom right
-            double mainDiagonalPercent = Math.cos(holonomicAngle);
+            mainDiagonalPercent = Math.cos(holonomicAngle);
             //the anti-diagonal is the diagonal from topRight to bottomLeft
-            double antiDiagonalPercent = Math.sin(holonomicAngle);
+            antiDiagonalPercent = Math.sin(holonomicAngle);
 
             double mainDiagonalTargetPosition = targetPosition * mainDiagonalPercent;
             double antiDiagonalTargetPosition = targetPosition * antiDiagonalPercent;
 
             leftFrontTargetPosition += -mainDiagonalTargetPosition;
             rightBackTargetPosition += mainDiagonalTargetPosition;
-            rightFrontTargetPosition += -antiDiagonalTargetPosition;
-            leftBackTargetPosition += antiDiagonalTargetPosition;
-
-            leftFrontPower = mainDiagonalPercent * -currentCommand.power;
-            rightBackPower = mainDiagonalPercent * currentCommand.power;
-            rightFrontPower = antiDiagonalPercent * -currentCommand.power;
-            leftBackPower = antiDiagonalPercent * currentCommand.power;
+            rightFrontTargetPosition += antiDiagonalTargetPosition;
+            leftBackTargetPosition += -antiDiagonalTargetPosition;
         }
+
+        leftFrontPower = mainDiagonalPercent * -currentCommand.power;
+        rightBackPower = mainDiagonalPercent * currentCommand.power;
+        rightFrontPower = antiDiagonalPercent * currentCommand.power;
+        leftBackPower = antiDiagonalPercent * -currentCommand.power;
+
         if (Math.abs(leftFrontTargetPosition - leftFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
             Math.abs(leftBackTargetPosition - leftBack.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
             Math.abs(rightFrontTargetPosition - rightFront.getCurrentPosition()) <= ENCODER_POSITION_TOLERANCE &&
@@ -312,6 +326,7 @@ public abstract class AutoBase extends OpMode {
       */
     private void turn() {
         if(commandFirstLoop) {
+            commandFirstLoop = false;
             targetAngle = currentCommand.angle * allianceColor.direction;
             getAngleError();
         }
@@ -414,6 +429,7 @@ public abstract class AutoBase extends OpMode {
     @Override
     public void stop() {
         display.clear();
+        display.writeDisplay();
         display.displayOff();
     }
 
