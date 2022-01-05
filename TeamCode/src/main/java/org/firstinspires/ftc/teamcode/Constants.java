@@ -28,7 +28,7 @@ public class Constants {
     @FloatRange(from=0.0, to=1.0)
     protected static final double BRISTLES_POWER_OUT = .75;
     @FloatRange(from=0.0, to=1.0)
-    protected static final double DUCK_SPEED = 0.24;
+    protected static final double DUCK_SPEED = 0.22;
     @FloatRange(from=0.0, to=1.0)
     protected static final double AUTO_DUCK_SPEED = .1;
     public static final double MAX_ARM_EXTENSION = -7500;

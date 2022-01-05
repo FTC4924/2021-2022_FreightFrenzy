@@ -213,7 +213,7 @@ public abstract class XDrive extends OpMode {
         }
 
         if (duckIn) {
-            duckWheel.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
+            duckWheel.setPosition(0.5 - (DUCK_SPEED * allianceColor.direction) / 2);
         } else {
             duckWheel.setPosition(0.5);
         }

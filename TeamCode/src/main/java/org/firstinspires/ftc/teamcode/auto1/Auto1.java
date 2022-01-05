@@ -13,10 +13,11 @@ public abstract class Auto1 extends AutoBase {
     protected ArrayList<Command> getCommands() {
         return new ArrayList<>(
                 Arrays.asList(
-                        new ArmRotate(.35),
-                        new ArmExtend(.5),
                         new Move(allianceColor.distanceToDucks, -90, .5),
                         new DetectDuckPosition(),
+                        new ArmRotate(.7),
+                        new ArmExtend(.75),
+                        new ArmRotate(.4)/*,
                         new Move(0.25,0.5),
                         new Turn(32),
                         new Move(1,.5)/*,

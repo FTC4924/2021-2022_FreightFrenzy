@@ -275,7 +275,7 @@ public abstract class AutoBase extends OpMode {
     public void ducks() {
         ducksOn = !ducksOn;
         if (ducksOn) {
-            duckWheel.setPosition((0.5 - AUTO_DUCK_SPEED * allianceColor.direction) / 2);
+            duckWheel.setPosition(0.5 - (AUTO_DUCK_SPEED * allianceColor.direction) / 2);
         } else {
             duckWheel.setPosition(.5);
         }
