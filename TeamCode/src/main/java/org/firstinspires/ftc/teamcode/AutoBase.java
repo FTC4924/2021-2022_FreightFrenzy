@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -30,6 +31,9 @@ import static org.firstinspires.ftc.teamcode.Constants.*;
 
 public abstract class AutoBase extends OpMode {
 
+    private int count;
+    private int count1;
+
     protected static AllianceColor allianceColor;
 
     private ArrayList<Command> currentCommands;
@@ -46,6 +50,9 @@ public abstract class AutoBase extends OpMode {
     private DcMotor armExtender;
 
     private Servo duckWheel;
+    private Servo bristleServo;
+
+    DigitalChannel digitalTouch;
 
     double mainDiagonalPercent;
     double antiDiagonalPercent;
@@ -73,9 +80,14 @@ public abstract class AutoBase extends OpMode {
 
     private BarcodePos barcodePos;
 
-    HT16K33 display;
+    private boolean newCommand;
+
+    private boolean bristlesOut;
 
     public void init() {
+        count = 0;
+        count1 = 0;
+
         allianceColor = getAllianceColor();
         currentCommands = getCommands();
         upstreamCommands = new ArrayList<>();
@@ -104,15 +116,19 @@ public abstract class AutoBase extends OpMode {
         armRotator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armRotator.setTargetPosition(0);
         armRotator.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armRotator.setPower(.5);
+        armRotator.setPower(1);
         armExtender = hardwareMap.get(DcMotor.class, "armExtender");
         armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armExtender.setTargetPosition(0);
         armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armExtender.setPower(.5);
+        armExtender.setPower(1);
 
         duckWheel = hardwareMap.get(Servo.class, "duckWheel");
+        bristleServo = hardwareMap.get(Servo.class, "bristleServo");
+
+        digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
+        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
 
         mainDiagonalPercent = 0;
         antiDiagonalPercent = 0;
@@ -158,8 +174,10 @@ public abstract class AutoBase extends OpMode {
             }
         });
 
-        display = hardwareMap.get(HT16K33.class, "display8x8");
-        display.displayOn();
+        newCommand = false;
+        barcodePos = BarcodePos.LEFT;
+
+        bristlesOut = false;
     }
 
     public void start() {
@@ -193,8 +211,16 @@ public abstract class AutoBase extends OpMode {
                 armRotate();
                 break;
 
+            case "ArmFullRetract":
+                armFullRetract();
+                break;
+
             case "Ducks":
                 ducks();
+                break;
+
+            case "BristlesOut":
+                bristlesOut();
                 break;
 
             case "DetectDuckPosition":
@@ -215,9 +241,10 @@ public abstract class AutoBase extends OpMode {
 
         telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
         telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
-        telemetry.addData("barcodePos", DuckDetectionPipeline.getBarcodePos());
+        telemetry.addData("barcodePos", barcodePos);
 
-        display.writeDisplay();
+        telemetry.addData("count",count);
+        telemetry.addData("count1",count1);
     }
 
     private void armRotate() {
@@ -236,6 +263,17 @@ public abstract class AutoBase extends OpMode {
             armExtender.setTargetPosition(currentCommand.position);
         }
         if(Math.abs(currentCommand.position - armExtender.getCurrentPosition()) < ENCODER_POSITION_TOLERANCE) {
+            nextCommand();
+        }
+    }
+
+    private void armFullRetract() {
+        armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armExtender.setPower(1);
+        if(digitalTouch.getState()) {
+            armExtender.setTargetPosition(armExtender.getCurrentPosition());
+            armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armExtender.setPower(1);
             nextCommand();
         }
     }
@@ -282,6 +320,16 @@ public abstract class AutoBase extends OpMode {
         nextCommand();
     }
 
+    private void bristlesOut() {
+        bristlesOut = !bristlesOut;
+        if (bristlesOut) {
+            bristleServo.setPosition(.5 - BRISTLES_POWER_OUT / 2);
+        } else {
+            duckWheel.setPosition(.5);
+        }
+        nextCommand();
+    }
+
     /**
      * Calculates the holonomic drive motor target encoder positions and sets the motor speeds.
      */
@@ -306,6 +354,8 @@ public abstract class AutoBase extends OpMode {
             rightBackTargetPosition += mainDiagonalTargetPosition;
             rightFrontTargetPosition += antiDiagonalTargetPosition;
             leftBackTargetPosition += -antiDiagonalTargetPosition;
+
+            count += 1;
         }
 
         leftFrontPower = mainDiagonalPercent * -currentCommand.power;
@@ -340,7 +390,6 @@ public abstract class AutoBase extends OpMode {
 
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
-        display.drawCharacter(0, 0, barcodePos.name().charAt(0));
         nextCommand();
     }
 
@@ -400,6 +449,7 @@ public abstract class AutoBase extends OpMode {
             if(!currentCommands.isEmpty())
                 upstreamCommands.add(0, currentCommands);
             currentCommands = newCommands;
+            newCommand = true;
         }
     }
 
@@ -408,10 +458,15 @@ public abstract class AutoBase extends OpMode {
      * saved commands and goes through them in a first in last out sequence.
      */
     private void nextCommand() {
+        if(!newCommand) {
+            currentCommands.remove(0);
+        } else {
+            newCommand = false;
+        }
         if (!currentCommands.isEmpty()) {
             currentCommand = currentCommands.get(0);
-            currentCommands.remove(0);
             commandFirstLoop = true;
+            count1 = count;
             resetStartTime();
         } else if (!upstreamCommands.isEmpty()) {
             currentCommands = upstreamCommands.get(0);
@@ -428,9 +483,6 @@ public abstract class AutoBase extends OpMode {
 
     @Override
     public void stop() {
-        display.clear();
-        display.writeDisplay();
-        display.displayOff();
     }
 
     protected abstract AllianceColor getAllianceColor();

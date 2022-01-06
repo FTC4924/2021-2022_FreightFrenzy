@@ -14,30 +14,34 @@ public abstract class Auto1 extends AutoBase {
         return new ArrayList<>(
                 Arrays.asList(
                         new Move(allianceColor.distanceToDucks, -90, .5),
+                        new Pause(1),
                         new DetectDuckPosition(),
-                        new ArmRotate(.7),
+                        new ArmRotate(.35),
                         new ArmExtend(.75),
-                        new ArmRotate(.4)/*,
-                        new Move(0.25,0.5),
-                        new Turn(32),
-                        new Move(1,.5)/*,
-                        new Command(LOAD_DUCK_COMMANDS,
+                        new ArmFullRetract(),
+                        new Move(0.25, 0, 0.5),
+                        new Turn(33),
+                        new LoadDuckCommands(
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new Command(MOVE,0.45, 90, .5)
+                                                new ArmRotate(.5)
                                         )
                                 ),
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new Command(MOVE,0.5, -90, .5)
+                                                new ArmRotate(.75)
                                         )
                                 ),
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new Command(MOVE,0.5, -90, .5)
+                                                new ArmRotate(1)
                                         )
                                 )
-                        )*/
+                        ),
+                        new Move(1.75,33,.5),
+                        new BristlesOut(),
+                        new Pause(5),
+                        new BristlesOut()
                 )
         );
     }

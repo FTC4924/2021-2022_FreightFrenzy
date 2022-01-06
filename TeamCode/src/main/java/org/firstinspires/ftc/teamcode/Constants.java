@@ -32,7 +32,7 @@ public class Constants {
     @FloatRange(from=0.0, to=1.0)
     protected static final double AUTO_DUCK_SPEED = .1;
     public static final double MAX_ARM_EXTENSION = -7500;
-    public static final double MAX_ARM_ROTATION = -6500;
+    public static final double MAX_ARM_ROTATION = -7500;
 
     public enum BarcodePos {
 
@@ -44,7 +44,7 @@ public class Constants {
 
     public enum AllianceColor {
 
-        BLUE(1, 0,.5),
+        BLUE(1, 0,.6),
         RED(-1, 0,.45);
 
         public final int direction;
