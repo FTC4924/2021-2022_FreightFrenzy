@@ -44,7 +44,7 @@ public class Constants {
 
     public enum AllianceColor {
 
-        BLUE(1, 0,.6),
+        BLUE(1, 0,.625),
         RED(-1, 0,.45);
 
         public final int direction;

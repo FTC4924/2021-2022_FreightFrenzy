@@ -34,11 +34,11 @@ public abstract class Auto1 extends AutoBase {
                                 ),
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new ArmRotate(1)
+                                                new ArmRotate(.95)
                                         )
                                 )
                         ),
-                        new Move(1.75,33,.5),
+                        new Move(1.75,35,.5),
                         new BristlesOut(),
                         new Pause(5),
                         new BristlesOut()
