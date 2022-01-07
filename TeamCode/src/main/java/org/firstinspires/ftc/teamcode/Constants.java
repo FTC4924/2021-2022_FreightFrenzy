@@ -18,7 +18,7 @@ public class Constants {
     protected static final double CONTROLLER_TOLERANCE = 0.05;
     @FloatRange(from=0.0, to=1.0)
     protected static final double ANGLE_ERROR_TOLERANCE = 0.05;
-    protected static final double ENCODER_POSITION_TOLERANCE = 20.0;
+    protected static final double ENCODER_POSITION_TOLERANCE = 80.0;
 
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;
     protected static final double TURNING_POWER_SCALAR = 1;
@@ -28,11 +28,11 @@ public class Constants {
     @FloatRange(from=0.0, to=1.0)
     protected static final double BRISTLES_POWER_OUT = .75;
     @FloatRange(from=0.0, to=1.0)
-    protected static final double DUCK_SPEED = 0.24;
+    protected static final double DUCK_SPEED = 0.22;
     @FloatRange(from=0.0, to=1.0)
-    protected static final double AUTO_DUCK_SPEED = .1;
+    protected static final double AUTO_DUCK_SPEED = .14;
     public static final double MAX_ARM_EXTENSION = -7500;
-    public static final double MAX_ARM_ROTATION = -6500;
+    public static final double MAX_ARM_ROTATION = -7500;
 
     public enum BarcodePos {
 
@@ -44,7 +44,7 @@ public class Constants {
 
     public enum AllianceColor {
 
-        BLUE(1, 0,.5),
+        BLUE(1, 0,.625),
         RED(-1, 0,.45);
 
         public final int direction;

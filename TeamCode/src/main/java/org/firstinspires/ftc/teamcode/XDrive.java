@@ -213,7 +213,7 @@ public abstract class XDrive extends OpMode {
         }
 
         if (duckIn) {
-            duckWheel.setPosition(0.5 + DUCK_SPEED * allianceColor.direction);
+            duckWheel.setPosition(0.5 - (DUCK_SPEED * allianceColor.direction) / 2);
         } else {
             duckWheel.setPosition(0.5);
         }
@@ -282,14 +282,13 @@ public abstract class XDrive extends OpMode {
                 limitSwitchPressed = true;
                 armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
             }
         } else {
             if (limitSwitchPressed) {
                 armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+                limitSwitchPressed = false;
             }
-            limitSwitchPressed = false;
         }
         telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
         telemetry.addData("Arm Rotator", armRotator.getCurrentPosition());
