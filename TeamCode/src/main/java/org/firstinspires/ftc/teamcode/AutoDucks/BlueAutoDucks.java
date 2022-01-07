@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import org.firstinspires.ftc.teamcode.AutoDucks.AutoDucks;
 import org.firstinspires.ftc.teamcode.Constants.*;
 
+@Disabled
 @Autonomous(name="BlueAutoDucks")
 public class BlueAutoDucks extends AutoDucks {
     @Override

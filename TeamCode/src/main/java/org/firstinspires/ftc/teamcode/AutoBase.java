@@ -92,6 +92,7 @@ public abstract class AutoBase extends OpMode {
         currentCommands = getCommands();
         upstreamCommands = new ArrayList<>();
         currentCommand = currentCommands.get(0);
+        currentCommands.remove(0);
         commandFirstLoop = true;
 
         leftFront = hardwareMap.get(DcMotor.class, "leftFront");
@@ -390,6 +391,7 @@ public abstract class AutoBase extends OpMode {
 
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
+        webcam.stopStreaming();
         nextCommand();
     }
 
@@ -449,7 +451,6 @@ public abstract class AutoBase extends OpMode {
             if(!currentCommands.isEmpty())
                 upstreamCommands.add(0, currentCommands);
             currentCommands = newCommands;
-            newCommand = true;
         }
     }
 
@@ -458,13 +459,9 @@ public abstract class AutoBase extends OpMode {
      * saved commands and goes through them in a first in last out sequence.
      */
     private void nextCommand() {
-        if(!newCommand) {
-            currentCommands.remove(0);
-        } else {
-            newCommand = false;
-        }
         if (!currentCommands.isEmpty()) {
             currentCommand = currentCommands.get(0);
+            currentCommands.remove(0);
             commandFirstLoop = true;
             count1 = count;
             resetStartTime();
