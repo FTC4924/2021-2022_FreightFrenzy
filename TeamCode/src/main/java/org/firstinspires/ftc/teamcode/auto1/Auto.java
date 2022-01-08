@@ -17,10 +17,32 @@ public abstract class Auto extends AutoBase {
                         new Pause(1),
                         new DetectDuckPosition(),
                         new Move(.5, -45.0, 0.5),
-                        new Move(1.6, -86, .5),
+                        new BlueRed(
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                        )
+                                ),
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                                new Turn(90)
+                                        )
+                                )
+                        ),
+                        new Move(1.6, -90, .5),
                         new Ducks(),
                         new Pause(5),
                         new Ducks(),
+                        new BlueRed(
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                        )
+                                ),
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                                new Turn(0)
+                                        )
+                                )
+                        ),
                         new ArmRotate(.35),
                         new ArmExtend(.75),
                         new ArmFullRetract(),
@@ -32,7 +54,7 @@ public abstract class Auto extends AutoBase {
                                 ),
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new ArmRotate(.7)
+                                                new ArmRotate(.75)
                                         )
                                 ),
                                 new ArrayList<>(
@@ -42,7 +64,7 @@ public abstract class Auto extends AutoBase {
                                 )
                         ),
                         new Move(4.35,90,.5),
-                        new Move(.8,0, .5),
+                        new Move(1,0, .5),
                         new BristlesOut(),
                         new Pause(3),
                         new BristlesOut(),
