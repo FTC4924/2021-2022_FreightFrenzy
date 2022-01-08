@@ -84,6 +84,8 @@ public abstract class AutoBase extends OpMode {
 
     private boolean bristlesOut;
 
+    HT16K33 display;
+
     public void init() {
         count = 0;
         count1 = 0;
@@ -179,6 +181,9 @@ public abstract class AutoBase extends OpMode {
         barcodePos = BarcodePos.LEFT;
 
         bristlesOut = false;
+
+        display = hardwareMap.get(HT16K33.class, "display8x8");
+        display.displayOn();
     }
 
     public void start() {
@@ -392,6 +397,9 @@ public abstract class AutoBase extends OpMode {
     private void detectDuckPosition() {
         barcodePos = DuckDetectionPipeline.getBarcodePos();
         webcam.stopStreaming();
+        display.clear();
+        display.drawCharacter(0, 0, barcodePos.name().charAt(0));
+        display.writeDisplay();
         nextCommand();
     }
 
@@ -480,6 +488,9 @@ public abstract class AutoBase extends OpMode {
 
     @Override
     public void stop() {
+        display.clear();
+        display.writeDisplay();
+        display.displayOff();
     }
 
     protected abstract AllianceColor getAllianceColor();
