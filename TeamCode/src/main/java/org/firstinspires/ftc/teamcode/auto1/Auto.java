@@ -28,7 +28,7 @@ public abstract class Auto extends AutoBase {
                                         )
                                 )
                         ),
-                        new Move(1.6, -90, .5),
+                        new Move(1.85, -90, .5),
                         new Ducks(),
                         new Pause(5),
                         new Ducks(),
@@ -64,7 +64,7 @@ public abstract class Auto extends AutoBase {
                                 )
                         ),
                         new Move(4.35,90,.5),
-                        new Move(1,0, .5),
+                        new Move(1.15,0, .5),
                         new BristlesOut(),
                         new Pause(3),
                         new BristlesOut(),

@@ -31,9 +31,6 @@ import static org.firstinspires.ftc.teamcode.Constants.*;
 
 public abstract class AutoBase extends OpMode {
 
-    private int count;
-    private int count1;
-
     protected static AllianceColor allianceColor;
 
     private ArrayList<Command> currentCommands;
@@ -87,8 +84,6 @@ public abstract class AutoBase extends OpMode {
     HT16K33 display;
 
     public void init() {
-        count = 0;
-        count1 = 0;
 
         allianceColor = getAllianceColor();
         currentCommands = getCommands();
@@ -247,10 +242,8 @@ public abstract class AutoBase extends OpMode {
 
         telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
         telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
+        barcodePos = DuckDetectionPipeline.getBarcodePos();
         telemetry.addData("barcodePos", barcodePos);
-
-        telemetry.addData("count",count);
-        telemetry.addData("count1",count1);
     }
 
     private void armRotate() {
@@ -361,7 +354,6 @@ public abstract class AutoBase extends OpMode {
             rightFrontTargetPosition += antiDiagonalTargetPosition;
             leftBackTargetPosition += -antiDiagonalTargetPosition;
 
-            count += 1;
         }
 
         leftFrontPower = mainDiagonalPercent * -currentCommand.power;
@@ -471,7 +463,6 @@ public abstract class AutoBase extends OpMode {
             currentCommand = currentCommands.get(0);
             currentCommands.remove(0);
             commandFirstLoop = true;
-            count1 = count;
             resetStartTime();
         } else if (!upstreamCommands.isEmpty()) {
             currentCommands = upstreamCommands.get(0);

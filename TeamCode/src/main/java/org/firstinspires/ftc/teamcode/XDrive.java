@@ -272,9 +272,9 @@ public abstract class XDrive extends OpMode {
         }
 
         if (!digitalTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
-            armExtender.setPower(gamepad2.right_stick_y / 2);
+            armExtender.setPower(gamepad2.right_stick_y * ARM_SPEED);
         } else if (armExtender.getCurrentPosition() > MAX_ARM_EXTENSION && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
-            armExtender.setPower(gamepad2.right_stick_y / 2);
+            armExtender.setPower(gamepad2.right_stick_y * ARM_SPEED);
         } else {
             armExtender.setPower(0.0);
         }

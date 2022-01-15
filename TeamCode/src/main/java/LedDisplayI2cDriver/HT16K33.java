@@ -124,7 +124,7 @@ public class HT16K33 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
      * @param setting The second nybble of the command address used for indicating settings like blinkRate
      * @param value The byte of data sent to the register. Only used when writing to the display
      */
-    private void write8(@NotNull Command command, byte setting, byte value) {
+    private void write8(Command command, byte setting, byte value) {
         this.deviceClient.write8(command.bVal * 16 + setting, value);
     }
 

@@ -27,7 +27,7 @@ public class DuckDetectionPipeline extends OpenCvPipeline
         //Core.extractChannel(YCrCb.submat(REGION_A), centerMat, COLOR_CHANNEL);
         Core.extractChannel(YCrCb.submat(REGION_B), rightMat, COLOR_CHANNEL);
 
-        leftMean = 100;
+        leftMean = 118;
         centerMean = (int) Core.mean(YCrCb.submat(REGION_A)).val[COLOR_CHANNEL];
         rightMean = (int) Core.mean(rightMat).val[0];
     }
