@@ -62,9 +62,9 @@ public class Constants {
 
     public static final Scalar GREEN = new Scalar(0, 255, 0);
     public static final int COLOR_CHANNEL = 2;
-    public static final Size REGION_SIZE = new Size(235, 175);
-    public static final Rect REGION_A = new Rect(new Point(30,645), REGION_SIZE);
-    public static final Rect REGION_B = new Rect(new Point(695,645), REGION_SIZE);
+    public static final Size REGION_SIZE = new Size(175, 175);
+    public static final Rect REGION_A = new Rect(new Point(60,645), REGION_SIZE);
+    public static final Rect REGION_B = new Rect(new Point(725,645), REGION_SIZE);
     public static final int RESOLUTION_WIDTH = 1280;
     public static final int RESOLUTION_HEIGHT = 960;
     public static final String WEBCAM_RECORDING_FILE = "/Movies/match_recording.mp4";
