@@ -13,15 +13,23 @@ public abstract class Auto extends AutoBase {
     protected ArrayList<Command> getCommands() {
         return new ArrayList<>(
                 Arrays.asList(
-                        new Move(allianceColor.distanceToDucks, -90, .5),
+                        new BlueRed(
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                                new Move(.625, 90, .5)
+                                        )
+                                ),
+                                new ArrayList<>(
+                                        Arrays.asList(
+                                                new Move(.45, 90, .5)
+                                        )
+                                )
+                        ),
                         new Pause(1),
                         new DetectDuckPosition(),
                         new Move(.5, -45.0, 0.5),
                         new BlueRed(
-                                new ArrayList<>(
-                                        Arrays.asList(
-                                        )
-                                ),
+                                new ArrayList<>(Arrays.asList()),
                                 new ArrayList<>(
                                         Arrays.asList(
                                                 new Turn(90)

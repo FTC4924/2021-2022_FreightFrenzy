@@ -5,7 +5,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.Constants.*;
 
-@Disabled
 @Autonomous(name="BlueAuto2")
 public class BlueAuto2 extends Auto2 {
     @Override
