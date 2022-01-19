@@ -87,7 +87,7 @@ public abstract class XDrive extends OpMode {
 
         angles = null;
         currentRobotAngle = 0.0;
-        angleOffset = 0.0;
+        angleOffset = allianceColor.angleOffset;
     }
 
     public void loop() {

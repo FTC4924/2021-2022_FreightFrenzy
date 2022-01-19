@@ -45,8 +45,8 @@ public class Constants {
 
     public enum AllianceColor {
 
-        BLUE(1, 0,.625),
-        RED(-1, 0,.45);
+        BLUE(1, 90,.625),
+        RED(-1, -90,.45);
 
         public final int direction;
         protected final double angleOffset;
@@ -54,7 +54,7 @@ public class Constants {
 
         AllianceColor(int direction, double angleOffset, double distanceToDucks) {
             this.direction = direction;
-            this.angleOffset = angleOffset;
+            this.angleOffset = Math.toRadians(angleOffset);
             this.distanceToDucks = distanceToDucks;
         }
 
@@ -69,6 +69,7 @@ public class Constants {
     public static final Rect REGION_B = new Rect(new Point(625,665), REGION_SIZE);
     public static final int RESOLUTION_WIDTH = 1280;
     public static final int RESOLUTION_HEIGHT = 960;
+    public static final int SHIPPING_ELEMENT_WIDTH = 100;
     public static final String WEBCAM_RECORDING_FILE = "/Movies/match_recording.mp4";
 
 }

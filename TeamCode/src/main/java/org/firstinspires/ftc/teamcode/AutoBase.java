@@ -13,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.Commands.Command;
 import org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline;
 import org.firstinspires.ftc.teamcode.visionpipelines.TestPipeline;
+import org.firstinspires.ftc.teamcode.visionpipelines.TestPipeline2;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -438,7 +439,7 @@ public abstract class AutoBase extends OpMode {
      */
     private void getAngleError() {
         angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, RADIANS);
-        currentRobotAngle = angles.firstAngle + allianceColor.angleOffset;
+        currentRobotAngle = angles.firstAngle;
         angleError = targetAngle - currentRobotAngle;
         //true modulo rather than just getting the remainder (different with negative numbers)
         angleError = ((((angleError - Math.PI) % (2 * Math.PI)) + (2 * Math.PI)) % (2 * Math.PI)) - Math.PI;

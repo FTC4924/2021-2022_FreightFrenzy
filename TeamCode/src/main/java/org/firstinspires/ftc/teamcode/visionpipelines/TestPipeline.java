@@ -1,12 +1,6 @@
 package org.firstinspires.ftc.teamcode.visionpipelines;
 
-import static org.firstinspires.ftc.teamcode.Constants.BarcodePos;
-import static org.firstinspires.ftc.teamcode.Constants.COLOR_CHANNEL;
-import static org.firstinspires.ftc.teamcode.Constants.GREEN;
-import static org.firstinspires.ftc.teamcode.Constants.REGION_A;
-import static org.firstinspires.ftc.teamcode.Constants.REGION_B;
-import static org.firstinspires.ftc.teamcode.Constants.YellowLowerBound;
-import static org.firstinspires.ftc.teamcode.Constants.YellowUpperBound;
+import static org.firstinspires.ftc.teamcode.Constants.*;
 
 import org.opencv.core.Core;
 import org.opencv.core.Mat;
@@ -38,11 +32,13 @@ public class TestPipeline extends OpenCvPipeline
 
     void inputToCb(Mat input)
     {
+        output = input;
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
         //Mat centerMat = new Mat();
         Core.inRange(hsv, YellowLowerBound, YellowUpperBound, thresh);
         Imgproc.morphologyEx(thresh, thresh, Imgproc.MORPH_OPEN, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(20,20)));
-        Imgproc.Canny(thresh, edges, 100, 300);
+        Imgproc.morphologyEx(thresh, thresh, Imgproc.MORPH_DILATE, Imgproc.getStructuringElement(Imgproc.MORPH_RECT, new Size(20,20)));
+        Imgproc.Canny(thresh, edges, 150, 250);
 
         // https://docs.opencv.org/3.4/da/d0c/tutorial_bounding_rects_circles.html
         // Oftentimes the edges are disconnected. findContours connects these edges.
@@ -51,7 +47,7 @@ public class TestPipeline extends OpenCvPipeline
         Mat hierarchy = new Mat();
         Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
-        /*MatOfPoint2f[] contoursPoly  = new MatOfPoint2f[contours.size()];
+        MatOfPoint2f[] contoursPoly  = new MatOfPoint2f[contours.size()];
         Rect[] boundRect = new Rect[contours.size()];
         for (int i = 0; i < contours.size(); i++) {
             contoursPoly[i] = new MatOfPoint2f();
@@ -60,8 +56,18 @@ public class TestPipeline extends OpenCvPipeline
         }
 
         for (Rect rect : boundRect) {
-            Imgproc.rectangle(output, rect, new Scalar(0.5, 76.9, 89.8));
-        }*/
+            if(rect.width > SHIPPING_ELEMENT_WIDTH) {
+                if(rect.x < RESOLUTION_HEIGHT / 2 - rect.width / 2) {
+                    barcodePos = BarcodePos.CENTER;
+                } else {
+                    barcodePos = BarcodePos.RIGHT;
+                }
+            } else {
+                barcodePos = BarcodePos.LEFT;
+            }
+
+            Imgproc.rectangle(output, rect, GREEN, 5);
+        }
     }
 
     private void maxAverage() {

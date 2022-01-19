@@ -16,12 +16,12 @@ public abstract class Auto extends AutoBase {
                         new BlueRed(
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new Move(.625, 90, .5)
+                                                new Move(.625, -90, .5)
                                         )
                                 ),
                                 new ArrayList<>(
                                         Arrays.asList(
-                                                new Move(.45, 90, .5)
+                                                new Move(.45, -90, .5)
                                         )
                                 )
                         ),
@@ -36,7 +36,7 @@ public abstract class Auto extends AutoBase {
                                         )
                                 )
                         ),
-                        new Move(1.85, -90, .5),
+                        new Move(1.75, -90, .5),
                         new Ducks(),
                         new Pause(5),
                         new Ducks(),
