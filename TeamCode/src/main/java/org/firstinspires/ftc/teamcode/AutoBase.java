@@ -13,7 +13,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.teamcode.Commands.Command;
 import org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline;
 import org.firstinspires.ftc.teamcode.visionpipelines.TestPipeline;
-import org.firstinspires.ftc.teamcode.visionpipelines.TestPipeline2;
+import org.opencv.core.Rect;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -34,6 +34,7 @@ import static org.firstinspires.ftc.teamcode.Constants.*;
 public abstract class AutoBase extends OpMode {
 
     protected static AllianceColor allianceColor;
+    private Rect largestRectangle;
 
     private ArrayList<Command> currentCommands;
     private ArrayList<ArrayList<Command>> upstreamCommands;
@@ -159,7 +160,7 @@ public abstract class AutoBase extends OpMode {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         webcam = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
 
-        webcam.setPipeline(new DuckDetectionPipeline());
+        webcam.setPipeline(new TestPipeline());
         webcam.setMillisecondsPermissionTimeout(2500);
         webcam.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
@@ -175,8 +176,9 @@ public abstract class AutoBase extends OpMode {
         });
 
         newCommand = false;
-        barcodePos = BarcodePos.LEFT;
-
+        barcodePos = null;
+        largestRectangle = new Rect(0,0,0,0);
+        
         bristlesOut = false;
 
         display = hardwareMap.get(HT16K33.class, "display8x8");
@@ -242,9 +244,9 @@ public abstract class AutoBase extends OpMode {
 
         setWheelPowersAndPositions();
 
-        telemetry.addData("centerColor", DuckDetectionPipeline.centerMean);
-        telemetry.addData("rightColor", DuckDetectionPipeline.rightMean);
-        barcodePos = DuckDetectionPipeline.getBarcodePos();
+        telemetry.addData("rectY", largestRectangle.x);
+        telemetry.addData("rectX", largestRectangle.y);
+        telemetry.addData("rectArea", largestRectangle.area());
         telemetry.addData("barcodePos", barcodePos);
     }
 
@@ -389,7 +391,8 @@ public abstract class AutoBase extends OpMode {
     private void pause() { if(time > currentCommand.duration) nextCommand(); }
 
     private void detectDuckPosition() {
-        barcodePos = DuckDetectionPipeline.getBarcodePos();
+        largestRectangle = TestPipeline.getLargestRect();
+        barcodePos = TestPipeline.getBarcodePos();
         webcam.stopStreaming();
         display.clear();
         display.drawCharacter(0, 0, barcodePos.name().charAt(0));

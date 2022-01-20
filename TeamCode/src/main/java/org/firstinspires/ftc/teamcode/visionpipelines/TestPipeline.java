@@ -17,6 +17,8 @@ import java.util.List;
 
 public class TestPipeline extends OpenCvPipeline
 {
+    public static double boxArea;
+    public static Rect largestRect = new Rect(0,0,0,0);
 
     public static int leftMean;
     public static int centerMean;
@@ -30,7 +32,7 @@ public class TestPipeline extends OpenCvPipeline
 
     private static volatile BarcodePos barcodePos = null;
 
-    void inputToCb(Mat input)
+    void findBarcodePosition(Mat input)
     {
         output = input;
         Imgproc.cvtColor(input, hsv, Imgproc.COLOR_RGB2HSV);
@@ -55,9 +57,15 @@ public class TestPipeline extends OpenCvPipeline
             boundRect[i] = Imgproc.boundingRect(new MatOfPoint(contoursPoly[i].toArray()));
         }
 
-        for (Rect rect : boundRect) {
-            if(rect.width > SHIPPING_ELEMENT_WIDTH) {
-                if(rect.x < RESOLUTION_HEIGHT / 2 - rect.width / 2) {
+        largestRect = new Rect(0,0,0,0);
+        if (boundRect.length > 0) {
+            for (Rect rect : boundRect) {
+                if(rect.area() > largestRect.area()) {
+                    largestRect = rect;
+                }
+            }
+            if(largestRect.area() > SHIPPING_ELEMENT_WIDTH) {
+                if(largestRect.x < RESOLUTION_HEIGHT / 2 - largestRect.width / 2) {
                     barcodePos = BarcodePos.CENTER;
                 } else {
                     barcodePos = BarcodePos.RIGHT;
@@ -65,44 +73,24 @@ public class TestPipeline extends OpenCvPipeline
             } else {
                 barcodePos = BarcodePos.LEFT;
             }
-
-            Imgproc.rectangle(output, rect, GREEN, 5);
-        }
-    }
-
-    private void maxAverage() {
-        int min = leftMean;
-        barcodePos = BarcodePos.LEFT;
-        if (centerMean < min) {
-            min = centerMean;
-            barcodePos = BarcodePos.CENTER;
-        }
-        if (rightMean < min) {
-            barcodePos = BarcodePos.RIGHT;
-        }
-    }
-
-    @Override
-    public void init(Mat firstFrame) {
-        inputToCb(firstFrame);
-        if (COLOR_CHANNEL == 0) {
-            maskedChannels = new Scalar(0, 1, 1);
-        } else if (COLOR_CHANNEL == 1) {
-            maskedChannels = new Scalar(1, 1, 0);
+            Imgproc.rectangle(output, largestRect, GREEN, 5);
         } else {
-            maskedChannels = new Scalar(1, 0, 1);
+            barcodePos = BarcodePos.LEFT;
         }
     }
 
     @Override
     public Mat processFrame(Mat input) {
-        inputToCb(input);
+        findBarcodePosition(input);
 
         return output;
     }
 
-    public static BarcodePos getBarcodePos()
-    {
+    public static BarcodePos getBarcodePos() {
         return barcodePos;
+    }
+
+    public static Rect getLargestRect() {
+        return largestRect;
     }
 }

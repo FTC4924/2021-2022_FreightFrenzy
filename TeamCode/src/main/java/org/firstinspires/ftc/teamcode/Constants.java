@@ -18,7 +18,7 @@ public class Constants {
     protected static final double CONTROLLER_TOLERANCE = 0.05;
     @FloatRange(from=0.0, to=1.0)
     protected static final double ANGLE_ERROR_TOLERANCE = 0.05;
-    protected static final double ENCODER_POSITION_TOLERANCE = 80.0;
+    protected static final double ENCODER_POSITION_TOLERANCE = 150.0;
 
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;
     protected static final double TURNING_POWER_SCALAR = 1;
@@ -45,8 +45,8 @@ public class Constants {
 
     public enum AllianceColor {
 
-        BLUE(1, 90,.625),
-        RED(-1, -90,.45);
+        BLUE(1, -90,.625),
+        RED(-1, 90,.45);
 
         public final int direction;
         protected final double angleOffset;
@@ -69,7 +69,7 @@ public class Constants {
     public static final Rect REGION_B = new Rect(new Point(625,665), REGION_SIZE);
     public static final int RESOLUTION_WIDTH = 1280;
     public static final int RESOLUTION_HEIGHT = 960;
-    public static final int SHIPPING_ELEMENT_WIDTH = 100;
+    public static final int SHIPPING_ELEMENT_WIDTH = 15000;
     public static final String WEBCAM_RECORDING_FILE = "/Movies/match_recording.mp4";
 
 }

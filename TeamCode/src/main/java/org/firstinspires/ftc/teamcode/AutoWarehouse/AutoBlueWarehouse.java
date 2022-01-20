@@ -1,12 +1,11 @@
-package org.firstinspires.ftc.teamcode.auto2;
+package org.firstinspires.ftc.teamcode.AutoWarehouse;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.Constants.*;
 
-@Autonomous(name="BlueAuto2")
-public class BlueAuto2 extends Auto2 {
+@Autonomous(name="BlueWarehouse")
+public class AutoBlueWarehouse extends AutoWarehouse {
     @Override
     protected AllianceColor getAllianceColor()  {
         return AllianceColor.BLUE;
