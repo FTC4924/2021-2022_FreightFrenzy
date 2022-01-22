@@ -18,7 +18,7 @@ public class Constants {
     protected static final double CONTROLLER_TOLERANCE = 0.05;
     @FloatRange(from=0.0, to=1.0)
     protected static final double ANGLE_ERROR_TOLERANCE = 0.05;
-    protected static final double ENCODER_POSITION_TOLERANCE = 150.0;
+    protected static final double ENCODER_POSITION_TOLERANCE = 100.0;
 
     protected static final double TURNING_ENCODER_POSITION_SCALAR = 20.0;
     protected static final double TURNING_POWER_SCALAR = 1;

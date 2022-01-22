@@ -7,6 +7,6 @@ package org.firstinspires.ftc.teamcode.Commands;
  * @see org.firstinspires.ftc.teamcode.visionpipelines.DuckDetectionPipeline
  */
 
-public class DetectDuckPosition extends Command {
-    public DetectDuckPosition() {}
+public class DetectBarcodePosition extends Command {
+    public DetectBarcodePosition() {}
 }

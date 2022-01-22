@@ -228,11 +228,11 @@ public abstract class AutoBase extends OpMode {
                 bristlesOut();
                 break;
 
-            case "DetectDuckPosition":
+            case "DetectBarcodePosition":
                 detectDuckPosition();
                 break;
 
-            case "LoadDuckCommands":
+            case "LoadBarcodeCommands":
                 loadDuckCommands();
                 break;
 
@@ -273,7 +273,7 @@ public abstract class AutoBase extends OpMode {
     private void armFullRetract() {
         armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armExtender.setPower(1);
-        if(digitalTouch.getState()) {
+        if(digitalTouch.getState() || time > 5) {
             armExtender.setTargetPosition(armExtender.getCurrentPosition());
             armExtender.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             armExtender.setPower(1);

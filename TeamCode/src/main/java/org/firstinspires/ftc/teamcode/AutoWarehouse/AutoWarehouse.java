@@ -17,15 +17,15 @@ public abstract class AutoWarehouse extends AutoBase {
                                         new Move(.45, 90, .5)
                                 )),
                                 new ArrayList<>(Arrays.asList(
-                                        new Move(.575, 90, .5)
+                                        new Move(.625, 90, .5)
                                 ))
-                        ),
+                        ),//Moves so the camera can see both barcode positions
                         new Pause(1),
-                        new DetectDuckPosition(),
-                        new ArmRotate(.35),
+                        new DetectBarcodePosition(),
+                        new ArmRotate(.35),//Deploys arm
                         new ArmExtend(.75),
                         new ArmFullRetract(),
-                        new BlueRed(
+                        new BlueRed(//lines up with the alliance hub
                                 new ArrayList<>(Arrays.asList(
                                         new Move(1.95, -90, .5)
                                 )),
@@ -33,7 +33,7 @@ public abstract class AutoWarehouse extends AutoBase {
                                         new Move(2.125, -90, .5)
                                 ))
                         ),
-                        new LoadDuckCommands(
+                        new LoadBarcodeCommands(//Raises the arm to respective level
                                 new ArrayList<>(Arrays.asList(
                                         new ArmRotate(.5)
                                 )),
@@ -44,11 +44,11 @@ public abstract class AutoWarehouse extends AutoBase {
                                         new ArmRotate(.95)
                                 ))
                         ),
-                        new Move(1.65,0,.5),
-                        new BristlesOut(),
+                        new Move(1.65,0,.5),//Moves toward the alliance hub
+                        new BristlesOut(),//spits the block out
                         new Pause(5),
                         new BristlesOut(),
-                        new Turn(90),
+                        new Turn(90),//parks in the warehouse
                         new Move(6,90,1)
                 )
         );
