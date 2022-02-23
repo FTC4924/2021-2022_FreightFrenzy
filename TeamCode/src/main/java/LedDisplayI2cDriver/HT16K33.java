@@ -164,6 +164,8 @@ public class HT16K33 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         Arrays.fill(displayBuffer, (byte)0);
     }
 
+    public void fill() { Arrays.fill(displayBuffer, (byte)0xff); }
+
     /**
      * Configures the offset of the displays rotation.
      * @param rotation indicated rotation; accepts 0-3 otherwise defaults to 0

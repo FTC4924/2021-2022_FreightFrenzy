@@ -196,7 +196,7 @@ public abstract class XDrive extends OpMode {
      * Controls for the duck wheel.
      */
     private void ducks() {
-        if (gamepad2.x) {
+        /*if (gamepad2.x) {
             if (!xPressed) {
                 xPressed = true;
                 duckIn = !duckIn;
@@ -218,7 +218,15 @@ public abstract class XDrive extends OpMode {
             duckWheel.setPosition(0.5 - (DUCK_SPEED * allianceColor.direction) / 2);
         } else {
             duckWheel.setPosition(0.5);
+        }*/
+        if(gamepad2.right_trigger > CONTROLLER_TOLERANCE) {
+            duckWheel.setPosition(.5+Math.pow(gamepad2.right_trigger,2)*.5);
+        } else if (gamepad2.left_trigger > CONTROLLER_TOLERANCE) {
+            duckWheel.setPosition(.5-Math.pow(gamepad2.left_trigger,2)*.5);
+        } else {
+            duckWheel.setPosition(.5);
         }
+        telemetry.addData("duckWheel", duckWheel.getPosition());
     }
 
     /**
