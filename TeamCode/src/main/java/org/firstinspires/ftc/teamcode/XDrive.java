@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -9,8 +10,6 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
-import LedDisplayI2cDriver.HT16K33;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
 import static org.firstinspires.ftc.teamcode.Constants.*;
@@ -21,7 +20,7 @@ public abstract class XDrive extends OpMode {
 
     protected static AllianceColor allianceColor;
 
-    //Motors
+    // Motors
     private DcMotor leftFront;
     private DcMotor leftBack;
     private DcMotor rightFront;
@@ -29,19 +28,25 @@ public abstract class XDrive extends OpMode {
     private DcMotor armRotator;
     private DcMotor armExtender;
 
-    //Servos
+    // Servos
     private Servo duckWheel;
     private Servo bristleServo;
 
-    DigitalChannel digitalTouch;
+    // Limit Switches
+    private DigitalChannel armTouch;
+    private DigitalChannel collectionTouch;
 
-    //Creating the variables for the gyro sensor
+    // Gyro sensor
     private BNO055IMU imu;
 
     private Orientation angles;
     private double angleOffset;
     private double currentRobotAngle;
 
+    // LED
+    private RevBlinkinLedDriver ledStrip;
+
+    // Toggle booleans
     private boolean xPressed;
     private boolean yPressed;
     private boolean aPressed;
@@ -50,7 +55,8 @@ public abstract class XDrive extends OpMode {
     private boolean duckOut;
     private boolean bristlesIn;
     private boolean bristlesOut;
-    private boolean limitSwitchPressed;
+    private boolean armTouchPressed;
+    private boolean collectionTouchState;
 
     public void init() {
         allianceColor = getAllianceColor();
@@ -72,10 +78,12 @@ public abstract class XDrive extends OpMode {
         duckWheel = hardwareMap.get(Servo.class, "duckWheel");
         bristleServo = hardwareMap.get(Servo.class, "bristleServo");
 
-        digitalTouch = hardwareMap.get(DigitalChannel.class, "digitalTouch");
-        digitalTouch.setMode(DigitalChannel.Mode.INPUT);
+        armTouch = hardwareMap.get(DigitalChannel.class, "armTouch");
+        armTouch.setMode(DigitalChannel.Mode.INPUT);
+        collectionTouch = hardwareMap.get(DigitalChannel.class, "collectionTouch");
+        collectionTouch.setMode(DigitalChannel.Mode.INPUT);
 
-        //Initializing the RevHub IMU
+        // Initializing the RevHub IMU
         BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.mode = BNO055IMU.SensorMode.IMU;
         parameters.angleUnit = BNO055IMU.AngleUnit.RADIANS;
@@ -88,6 +96,8 @@ public abstract class XDrive extends OpMode {
         angles = null;
         currentRobotAngle = 0.0;
         angleOffset = allianceColor.angleOffset;
+
+        ledStrip = hardwareMap.get(RevBlinkinLedDriver.class, "ledStrip");
     }
 
     public void loop() {
@@ -101,6 +111,10 @@ public abstract class XDrive extends OpMode {
         ducks();
 
         arm();
+
+        ledStripDisplay();
+
+        blockWeightDisplay();
     }
 
     /**
@@ -142,7 +156,7 @@ public abstract class XDrive extends OpMode {
 
         if (Math.abs(gamepad1LeftStickX) >= CONTROLLER_TOLERANCE || Math.abs(gamepad1LeftStickY) >= CONTROLLER_TOLERANCE) {
 
-            //Uses atan2 to convert the x and y values of the controller to an angle
+            // Uses atan2 to convert the x and y values of the controller to an angle
             double gamepad1LeftStickAngle = Math.atan2(gamepad1LeftStickY, gamepad1LeftStickX);
 
             /*Subtracts the robot's current angle from the command angle so that it travels globally
@@ -150,12 +164,12 @@ public abstract class XDrive extends OpMode {
             align with the wheels*/
             double holonomicAngle = gamepad1LeftStickAngle + currentRobotAngle + Math.PI / 4;
 
-            //overall power based on how far the stick is from the center
+            // overall power based on how far the stick is from the center
             double power = Math.sqrt(Math.pow(gamepad1LeftStickX, 2) + Math.pow(gamepad1LeftStickY, 2));
 
-            //the main diagonal is the diagonal from top left to bottom right
+            // the main diagonal is the diagonal from top left to bottom right
             double mainDiagonalPercent = Math.cos(holonomicAngle);
-            //the anti-diagonal is the diagonal from topRight to bottomLeft
+            // the anti-diagonal is the diagonal from topRight to bottomLeft
             double antiDiagonalPercent = Math.sin(holonomicAngle);
 
             leftFrontPower = mainDiagonalPercent * -power;
@@ -184,7 +198,7 @@ public abstract class XDrive extends OpMode {
         rightFrontPower += angleError * TURNING_POWER_SCALAR;
         rightBackPower += angleError * TURNING_POWER_SCALAR;
 
-        //Sets the wheel powers
+        // Sets the wheel powers
         leftFront.setPower(leftFrontPower);
         leftBack.setPower(leftBackPower);
         rightFront.setPower(rightFrontPower);
@@ -239,7 +253,7 @@ public abstract class XDrive extends OpMode {
             armRotator.setPower(0.0);
         }
 
-        //Double toggle for the bristles
+        // Double toggle for the bristles
         if (gamepad2.b) {
             if (!aPressed) {
                 aPressed = true;
@@ -263,7 +277,18 @@ public abstract class XDrive extends OpMode {
             bPressed = false;
         }
 
-        //Setting the bristles power
+        // Auto stop for the bristles
+        collectionTouchState = collectionTouch.getState();
+        if (bristlesIn && collectionTouchState) {
+            bristlesIn = false;
+        }
+        if (collectionTouchState) {
+            telemetry.addData("Collection Touch", "Pressed");
+        } else {
+            telemetry.addData("Collection Touch", "Not Pressed");
+        }
+
+        // Setting the bristles power
         if (bristlesIn) {
             bristleServo.setPosition(.5 + BRISTLES_POWER_IN / 2);
         } else if (bristlesOut) {
@@ -273,13 +298,13 @@ public abstract class XDrive extends OpMode {
         }
 
         // Controls the arm extender
-        if (digitalTouch.getState()) {
-            telemetry.addData("Digital Touch", "Pressed");
+        if (armTouch.getState()) {
+            telemetry.addData("Arm Touch", "Pressed");
         } else {
-            telemetry.addData("Digital Touch", "Not Pressed");
+            telemetry.addData("Arm Touch", "Not Pressed");
         }
 
-        if (!digitalTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
+        if (!armTouch.getState() && gamepad2.right_stick_y >= CONTROLLER_TOLERANCE) {
             armExtender.setPower(gamepad2.right_stick_y * ARM_SPEED);
         } else if (armExtender.getCurrentPosition() > MAX_ARM_EXTENSION && gamepad2.right_stick_y <= -CONTROLLER_TOLERANCE) {
             armExtender.setPower(gamepad2.right_stick_y * ARM_SPEED);
@@ -287,21 +312,33 @@ public abstract class XDrive extends OpMode {
             armExtender.setPower(0.0);
         }
 
-        if (digitalTouch.getState()) {
-            if (!limitSwitchPressed) {
-                limitSwitchPressed = true;
+        if (armTouch.getState()) {
+            if (!armTouchPressed) {
+                armTouchPressed = true;
                 armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             }
         } else {
-            if (limitSwitchPressed) {
+            if (armTouchPressed) {
                 armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                limitSwitchPressed = false;
+                armTouchPressed = false;
             }
         }
         telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
         telemetry.addData("Arm Rotator", armRotator.getCurrentPosition());
+
+    }
+
+    private void ledStripDisplay() {
+        if (collectionTouchState) {
+            ledStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_GRAY);
+        } else {
+            ledStrip.setPattern(allianceColor.pattern);
+        }
+    }
+
+    private void blockWeightDisplay() {
 
     }
 

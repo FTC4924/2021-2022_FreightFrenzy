@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+
 import org.opencv.core.Point;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
@@ -43,19 +45,30 @@ public class Constants {
 
     }
 
+    public enum FreightType {
+        NONE,
+        DUCK,
+        BALL,
+        LIGHT,
+        MEDIUM,
+        HEAVY
+    }
+
     public enum AllianceColor {
 
-        BLUE(1, -90,.625),
-        RED(-1, 90,.45);
+        BLUE(1, -90,.625, RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_BLUE),
+        RED(-1, 90,.45, RevBlinkinLedDriver.BlinkinPattern.LIGHT_CHASE_RED);
 
         public final int direction;
         protected final double angleOffset;
         public final double distanceToDucks;
+        protected final RevBlinkinLedDriver.BlinkinPattern pattern;
 
-        AllianceColor(int direction, double angleOffset, double distanceToDucks) {
+        AllianceColor(int direction, double angleOffset, double distanceToDucks, RevBlinkinLedDriver.BlinkinPattern pattern) {
             this.direction = direction;
             this.angleOffset = Math.toRadians(angleOffset);
             this.distanceToDucks = distanceToDucks;
+            this.pattern = pattern;
         }
 
     }
