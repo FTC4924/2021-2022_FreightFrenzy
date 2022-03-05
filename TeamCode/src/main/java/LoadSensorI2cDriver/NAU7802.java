@@ -13,6 +13,9 @@ import static LoadSensorI2cDriver.Constants.*;
 @DeviceProperties(name = "NAU7802 Strain Gauge", xmlTag = "NAU7802")
 public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2cAddrConfig {
 
+    int zeroOffset = DEFAULT_ZERO_OFFSET;
+    double calibrationFactor = DEFAULT_CALIBRATION_FACTOR;
+
     /**
      * Returns an indication of the manufacturer of this device.
      * @return the device's manufacturer
@@ -37,6 +40,9 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         super(deviceClient, true);
 
         this.deviceClient.setI2cAddress(ADDRESS_I2C_DEFAULT);
+
+        setSampleRate(DEFAULT_SAMPLE_RATE);
+        calibrateAFE();
 
         super.registerArmingStateCallback(false);
         this.deviceClient.engage();
@@ -78,7 +84,50 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         return this.deviceClient.read8(command.bVal);
     }
 
+    private void write8(Command command, byte value) {
+        this.deviceClient.write8(command.bVal, value);
+    }
+
     public byte getReading() {
         return read8(Command.READ);
+    }
+
+    public int getAverageReading() {
+        float total = 0;
+
+        for(int i = 0; i < SAMPLE_SIZE; i++) {
+            total += getReading();
+        }
+
+        return Math.round(total / SAMPLE_SIZE);
+    }
+
+    public double getWeight() {
+        double averageReading = getAverageReading();
+        return (averageReading - zeroOffset) / calibrationFactor;
+    }
+
+    public void zero() {
+        zeroOffset = getAverageReading();
+    }
+
+    public void calibrate(double weight) {
+        calibrationFactor = (getAverageReading() - zeroOffset) / weight;
+    }
+
+    public void setSampleRate(byte sampleRate) {
+        if(sampleRate > DEFAULT_SAMPLE_RATE) sampleRate = DEFAULT_SAMPLE_RATE;
+        byte settings = read8(Command.CTRL2);
+        settings &= 0b10001111;
+        settings |= sampleRate;
+        write8(Command.CTRL2, settings);
+    }
+
+    public void calibrateAFE() {
+        write8(Command.CTRL2, (byte) 0b100);
+    }
+
+    public byte available() {
+        return read8(Command.PU_CTRL);
     }
 }

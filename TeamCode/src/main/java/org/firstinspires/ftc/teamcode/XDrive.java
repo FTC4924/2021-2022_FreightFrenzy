@@ -327,6 +327,8 @@ public abstract class XDrive extends OpMode {
         }
         telemetry.addData("Arm Extender", armExtender.getCurrentPosition());
         telemetry.addData("Arm Rotator", armRotator.getCurrentPosition());
+        telemetry.addData("Collection in", bristlesIn);
+        telemetry.addData("Collection Out", bristlesOut);
 
     }
 
