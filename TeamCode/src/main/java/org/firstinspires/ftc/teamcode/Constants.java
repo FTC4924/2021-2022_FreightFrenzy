@@ -34,7 +34,7 @@ public class Constants {
     protected static final double ARM_SPEED = 0.75;
     @FloatRange(from=0.0, to=1.0)
     protected static final double AUTO_DUCK_SPEED = .14;
-    public static final double MAX_ARM_EXTENSION = -7500;
+    public static final double MAX_ARM_EXTENSION = -9000;
     public static final double MAX_ARM_ROTATION = -7500;
 
     public enum BarcodePos {

@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.hardware.configuration.annotations.DevicePropertie
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
 import static LoadSensorI2cDriver.Constants.*;
+import static LoadSensorI2cDriver.Constants.PU_CTRL_Bits.*;
+import static LoadSensorI2cDriver.Constants.Register.PU_CTRL;
 
 @I2cDeviceType
 @DeviceProperties(name = "NAU7802 Strain Gauge", xmlTag = "NAU7802")
@@ -78,18 +80,19 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
 
     /**
      * Writes a byte to the indicated register.
-     * @param command The first nybble of the command address used for indicating the register
+     * @param register The first nybble of the command address used for indicating the register
      */
-    private byte read8(Command command) {
-        return this.deviceClient.read8(command.bVal);
+    private byte read8(Register register) {
+        return this.deviceClient.read8(register.bVal);
     }
 
-    private void write8(Command command, byte value) {
-        this.deviceClient.write8(command.bVal, value);
+    private boolean write8(Register register, byte value) {
+        this.deviceClient.write8(register.bVal, value);
+        return true;
     }
 
     public byte getReading() {
-        return read8(Command.READ);
+        return read8(Register.READ);
     }
 
     public int getAverageReading() {
@@ -117,17 +120,72 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
 
     public void setSampleRate(byte sampleRate) {
         if(sampleRate > DEFAULT_SAMPLE_RATE) sampleRate = DEFAULT_SAMPLE_RATE;
-        byte settings = read8(Command.CTRL2);
+        byte settings = read8(Register.CTRL2);
         settings &= 0b10001111;
         settings |= sampleRate;
-        write8(Command.CTRL2, settings);
+        write8(Register.CTRL2, settings);
     }
 
-    public void calibrateAFE() {
-        write8(Command.CTRL2, (byte) 0b100);
+    public boolean calibrateAFE() {
+        return write8(Register.CTRL2, (byte) 0b100);
     }
 
-    public byte available() {
-        return read8(Command.PU_CTRL);
+    public boolean available() {
+        return getBit(PU_CTRL, 5);
+    }
+
+    private boolean getBit(Register register, int index) {
+        byte reading = read8(register);
+        reading &= 1 << index;
+        return reading != 0;
+    }
+
+    private boolean begin() {
+        boolean result = true;
+
+        result &= reset(); //Reset all registers
+
+        result &= powerUp(); //Power on analog and digital sections of the scale
+
+        result &= setLDO(LDO_3V3); //Set LDO to 3.3V
+
+        result &= setGain(GAIN_128); //Set gain to 128
+
+        result &= setSampleRate(SPS_80); //Set samples per second to 10
+
+        result &= setRegister(ADC, 0x30); //Turn off CLK_CHP. From 9.1 power on sequencing.
+
+        result &= setBit(PGA_PWR_PGA_CAP_EN, PGA_PWR); //Enable 330pF decoupling cap on chan 2. From 9.14 application circuit note.
+
+        result &= calibrateAFE(); //Re-cal analog front end when we change gain, sample rate, or channel
+
+        return (result);
+    }
+
+    private boolean powerUp() {
+        setBit(PU_CTRL_PUD.ordinal(), PU_CTRL);
+        setBit(PU_CTRL_PUA.ordinal(), PU_CTRL);
+    }
+
+    private boolean reset() {
+        setBit(PU_CTRL_RR.ordinal(), PU_CTRL); //Set RR
+        try {
+            wait(1);
+        } catch (InterruptedException ignored) {
+
+        }
+        return clearBit(PU_CTRL_RR.ordinal(), PU_CTRL); //Clear RR to leave reset state
+    }
+
+    private boolean setBit(int index, Register register) {
+        byte registerBuffer = read8(register);
+        registerBuffer |= 1 << index;
+        return write8(register, registerBuffer);
+    }
+
+    private boolean clearBit(int index, Register register) {
+        byte registerBuffer = read8(register);
+        registerBuffer &= ~(1 << index);
+        return write8(register, registerBuffer);
     }
 }

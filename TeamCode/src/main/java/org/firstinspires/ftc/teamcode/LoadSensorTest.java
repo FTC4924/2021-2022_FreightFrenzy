@@ -15,7 +15,9 @@ public class LoadSensorTest extends OpMode {
     }
 
     public void loop() {
-        telemetry.addData("Weight", loadSensor.available());
+        telemetry.addData("Available", loadSensor.available());
+        telemetry.addData("Weight", loadSensor.getWeight());
+        telemetry.addData("Reading", loadSensor.getReading());
     }
 
 }

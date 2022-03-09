@@ -278,11 +278,8 @@ public abstract class XDrive extends OpMode {
         }
 
         // Auto stop for the bristles
-        collectionTouchState = collectionTouch.getState();
-        if (bristlesIn && collectionTouchState) {
-            bristlesIn = false;
-        }
-        if (collectionTouchState) {
+        bristlesIn = (!bristlesIn || !collectionTouch.getState()) && bristlesIn;
+        if (collectionTouch.getState()) {
             telemetry.addData("Collection Touch", "Pressed");
         } else {
             telemetry.addData("Collection Touch", "Not Pressed");
