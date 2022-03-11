@@ -8,8 +8,13 @@ import com.qualcomm.robotcore.hardware.configuration.annotations.DevicePropertie
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
 import static LoadSensorI2cDriver.Constants.*;
+import static LoadSensorI2cDriver.Constants.CTRL2_BITS.*;
+import static LoadSensorI2cDriver.Constants.GAIN_VALUES.*;
+import static LoadSensorI2cDriver.Constants.LDO_VALUES.*;
+import static LoadSensorI2cDriver.Constants.PGA_PWR_Bits.*;
 import static LoadSensorI2cDriver.Constants.PU_CTRL_Bits.*;
-import static LoadSensorI2cDriver.Constants.Register.PU_CTRL;
+import static LoadSensorI2cDriver.Constants.Register.*;
+import static LoadSensorI2cDriver.Constants.SPS_VALUES.*;
 
 @I2cDeviceType
 @DeviceProperties(name = "NAU7802 Strain Gauge", xmlTag = "NAU7802")
@@ -57,7 +62,23 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
      */
     @Override
     protected synchronized boolean doInitialize() {
-        return true;
+        boolean result = reset(); //Reset all registers
+
+        result &= powerUp(); //Power on analog and digital sections of the scale
+
+        result &= setLDO(LDO_3V3.value); //Set LDO to 3.3V
+
+        result &= setGain(GAIN_128.value); //Set gain to 128
+
+        result &= setSampleRate(SPS_80.value); //Set samples per second to 10
+
+        result &= setRegister(ADC, (byte)0x30); //Turn off CLK_CHP. From 9.1 power on sequencing.
+
+        result &= setBit(PGA_PWR, PGA_PWR_PGA_CAP_EN.index); //Enable 330pF decoupling cap on chan 2. From 9.14 application circuit note.
+
+        result &= calibrateAFE(); //Re-cal analog front end when we change gain, sample rate, or channel
+
+        return (result);
     }
 
     /**
@@ -82,24 +103,26 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
      * Writes a byte to the indicated register.
      * @param register The first nybble of the command address used for indicating the register
      */
-    private byte read8(Register register) {
+    private byte getRegister(Register register) {
         return this.deviceClient.read8(register.bVal);
     }
 
-    private boolean write8(Register register, byte value) {
+    private boolean setRegister(Register register, byte value) {
         this.deviceClient.write8(register.bVal, value);
         return true;
     }
 
-    public byte getReading() {
-        return read8(Register.READ);
+    public int getReading() {
+        int value = (int)getRegister(ADCO_B2) << 16;
+        value |= (int)getRegister(ADCO_B2) << 8;
+        return value | (int)getRegister(ADCO_B2);
     }
 
     public int getAverageReading() {
         float total = 0;
 
         for(int i = 0; i < SAMPLE_SIZE; i++) {
-            total += getReading();
+            total += getRegister(ADCO_B2);
         }
 
         return Math.round(total / SAMPLE_SIZE);
@@ -118,74 +141,88 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         calibrationFactor = (getAverageReading() - zeroOffset) / weight;
     }
 
-    public void setSampleRate(byte sampleRate) {
+    public boolean setSampleRate(byte sampleRate) {
         if(sampleRate > DEFAULT_SAMPLE_RATE) sampleRate = DEFAULT_SAMPLE_RATE;
-        byte settings = read8(Register.CTRL2);
+        byte settings = getRegister(CTRL2);
         settings &= 0b10001111;
         settings |= sampleRate;
-        write8(Register.CTRL2, settings);
+        return setRegister(CTRL2, settings);
     }
 
     public boolean calibrateAFE() {
-        return write8(Register.CTRL2, (byte) 0b100);
+        setRegister(CTRL2, (byte) 0b100);
+
+        for(int i = 0; i < 1000; i++) {
+            if(!getBit(CTRL2, CTRL2_CALS.index)) {
+                return !getBit(CTRL2, CTRL2_CAL_ERROR.index);
+            }
+            try { Thread.sleep(1); }
+            catch (InterruptedException e) { System.out.println(e); }
+        }
+        return false;
     }
 
     public boolean available() {
-        return getBit(PU_CTRL, 5);
+        return getBit(PU_CTRL, PU_CTRL_CR.index);
     }
 
-    private boolean getBit(Register register, int index) {
-        byte reading = read8(register);
+    private boolean getBit(Register register, byte index) {
+        byte reading = getRegister(register);
         reading &= 1 << index;
         return reading != 0;
     }
 
-    private boolean begin() {
-        boolean result = true;
-
-        result &= reset(); //Reset all registers
-
-        result &= powerUp(); //Power on analog and digital sections of the scale
-
-        result &= setLDO(LDO_3V3); //Set LDO to 3.3V
-
-        result &= setGain(GAIN_128); //Set gain to 128
-
-        result &= setSampleRate(SPS_80); //Set samples per second to 10
-
-        result &= setRegister(ADC, 0x30); //Turn off CLK_CHP. From 9.1 power on sequencing.
-
-        result &= setBit(PGA_PWR_PGA_CAP_EN, PGA_PWR); //Enable 330pF decoupling cap on chan 2. From 9.14 application circuit note.
-
-        result &= calibrateAFE(); //Re-cal analog front end when we change gain, sample rate, or channel
-
-        return (result);
+    public boolean powerUp() {
+        setBit(PU_CTRL, PU_CTRL_PUD.index);
+        setBit(PU_CTRL, PU_CTRL_PUA.index);
+        for (int i = 0; i < 100; i++){
+            if (getBit(PU_CTRL, PU_CTRL_PUR.index)) return true;
+            try { Thread.sleep(1); }
+            catch (InterruptedException e) { System.out.println(e); }
+        }
+        return false;
     }
 
-    private boolean powerUp() {
-        setBit(PU_CTRL_PUD.ordinal(), PU_CTRL);
-        setBit(PU_CTRL_PUA.ordinal(), PU_CTRL);
+    public boolean setLDO(byte ldoValue)
+    {
+        if (ldoValue > 0b111) ldoValue = 0b111; //Error check
+
+        //Set the value of the LDO
+        byte value = getRegister(CTRL1);
+        value &= 0b11000111;    //Clear LDO bits
+        value |= ldoValue << 3; //Mask in new LDO bits
+        setRegister(CTRL1, value);
+
+        return (setBit(PU_CTRL, PU_CTRL_AVDDS.index)); //Enable the internal LDO
+    }
+
+    public boolean setGain(byte gainValue)
+    {
+        if (gainValue > 0b111) gainValue = 0b111; //Error check
+
+        byte value = getRegister(CTRL1);
+        value &= 0b11111000; //Clear gain bits
+        value |= gainValue;  //Mask in new bits
+
+        return (setRegister(CTRL1, value));
     }
 
     private boolean reset() {
-        setBit(PU_CTRL_RR.ordinal(), PU_CTRL); //Set RR
-        try {
-            wait(1);
-        } catch (InterruptedException ignored) {
-
-        }
-        return clearBit(PU_CTRL_RR.ordinal(), PU_CTRL); //Clear RR to leave reset state
+        setBit(PU_CTRL, PU_CTRL_RR.index); //Set RR
+        try { Thread.sleep(1); }
+        catch (InterruptedException e) { System.out.println(e); }
+        return clearBit(PU_CTRL, PU_CTRL_RR.index); //Clear RR to leave reset state
     }
 
-    private boolean setBit(int index, Register register) {
-        byte registerBuffer = read8(register);
+    private boolean setBit(Register register, byte index) {
+        byte registerBuffer = getRegister(register);
         registerBuffer |= 1 << index;
-        return write8(register, registerBuffer);
+        return setRegister(register, registerBuffer);
     }
 
-    private boolean clearBit(int index, Register register) {
-        byte registerBuffer = read8(register);
+    private boolean clearBit(Register register, byte index) {
+        byte registerBuffer = getRegister(register);
         registerBuffer &= ~(1 << index);
-        return write8(register, registerBuffer);
+        return setRegister(register, registerBuffer);
     }
 }
