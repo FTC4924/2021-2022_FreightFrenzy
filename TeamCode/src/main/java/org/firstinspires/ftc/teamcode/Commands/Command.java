@@ -19,5 +19,6 @@ public class Command {
     public double angle;
     public double power;
     public int position;
+    public int constructorID;
 
 }
