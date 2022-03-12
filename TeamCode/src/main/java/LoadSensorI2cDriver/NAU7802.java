@@ -1,11 +1,15 @@
 package LoadSensorI2cDriver;
 
+import android.os.Build;
+
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cAddrConfig;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
 import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
+
+import androidx.annotation.RequiresApi;
 
 import static LoadSensorI2cDriver.Constants.*;
 import static LoadSensorI2cDriver.Constants.CTRL2_BITS.*;
@@ -112,31 +116,43 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         return true;
     }
 
-    public int getReading() {
-        int value = (int)getRegister(ADCO_B2) << 16;
-        value |= (int)getRegister(ADCO_B2) << 8;
-        return value | (int)getRegister(ADCO_B2);
+    private byte[] burstRead(Register register, int amount) {
+        return this.deviceClient.read(register.bVal, amount);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public long getReading() {
+        byte[] readings;
+        readings = burstRead(ADCO_B2, 3);
+        long reading = readings[0] << 16;
+        reading |= Byte.toUnsignedInt(readings[1]) << 8;
+        return reading | Byte.toUnsignedInt(readings[2]);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public int getAverageReading() {
-        float total = 0;
+        int total = 0;
 
         for(int i = 0; i < SAMPLE_SIZE; i++) {
-            total += getRegister(ADCO_B2);
+            total += getReading();
         }
 
         return Math.round(total / SAMPLE_SIZE);
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public double getWeight() {
         double averageReading = getAverageReading();
+
         return (averageReading - zeroOffset) / calibrationFactor;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void zero() {
         zeroOffset = getAverageReading();
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void calibrate(double weight) {
         calibrationFactor = (getAverageReading() - zeroOffset) / weight;
     }

@@ -94,8 +94,8 @@ public class Constants {
         SPS_VALUES(byte value) { this.value = value; }
     }
 
-    protected static final int SAMPLE_SIZE = 8;
+    protected static final int SAMPLE_SIZE = 10;
     protected static final int DEFAULT_ZERO_OFFSET = 0;
-    protected static final double DEFAULT_CALIBRATION_FACTOR = 0;
+    protected static final double DEFAULT_CALIBRATION_FACTOR = 1;
     protected static final byte DEFAULT_SAMPLE_RATE = 0b111;
 }
