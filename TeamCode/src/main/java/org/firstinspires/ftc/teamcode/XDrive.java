@@ -1,20 +1,33 @@
 package org.firstinspires.ftc.teamcode;
 
+import android.os.Build;
+
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
-import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
-import static org.firstinspires.ftc.teamcode.Constants.*;
-import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER_IN;
+import LedDisplayI2cDriver.HT16K33;
+import LoadSensorI2cDriver.NAU7802;
+import androidx.annotation.RequiresApi;
 
+import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
+import static org.firstinspires.ftc.teamcode.Constants.ARM_SPEED;
+import static org.firstinspires.ftc.teamcode.Constants.AllianceColor;
+import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER_IN;
+import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER_OUT;
+import static org.firstinspires.ftc.teamcode.Constants.CONTROLLER_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Constants.MAX_ARM_EXTENSION;
+import static org.firstinspires.ftc.teamcode.Constants.TURNING_POWER_SCALAR;
+
+import static org.firstinspires.ftc.teamcode.Constants.*;
 
 public abstract class XDrive extends OpMode {
 
@@ -58,6 +71,11 @@ public abstract class XDrive extends OpMode {
     private boolean armTouchPressed;
     private boolean collectionTouchState;
 
+    private NAU7802 loadSensor;
+    private FreightType currentFreightType;
+
+    HT16K33[] displays;
+
     public void init() {
         allianceColor = getAllianceColor();
 
@@ -71,6 +89,8 @@ public abstract class XDrive extends OpMode {
         armExtender = hardwareMap.get(DcMotor.class, "armExtender");
 
         armRotator.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        armRotator.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armRotator.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armExtender.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         armExtender.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armExtender.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -98,8 +118,23 @@ public abstract class XDrive extends OpMode {
         angleOffset = allianceColor.angleOffset;
 
         ledStrip = hardwareMap.get(RevBlinkinLedDriver.class, "ledStrip");
+
+        loadSensor = hardwareMap.get(NAU7802.class, "loadSensor");
+
+        displays = new HT16K33[] {
+                hardwareMap.get(HT16K33.class, "display0"),
+                hardwareMap.get(HT16K33.class, "display1")
+        };
+        displays[1].setI2cAddress(I2cAddr.create7bit(0x74));
+        displays[1].setRotation(1);
+        for (HT16K33 display : displays) {
+            display.fill();
+            display.writeDisplay();
+            display.displayOn();
+        }
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void loop() {
 
         getAngle();
@@ -114,7 +149,7 @@ public abstract class XDrive extends OpMode {
 
         ledStripDisplay();
 
-        blockWeightDisplay();
+        //blockWeightDisplay();
     }
 
     /**
@@ -210,19 +245,24 @@ public abstract class XDrive extends OpMode {
      * Controls for the duck wheel.
      */
     private void ducks() {
-        /*if (gamepad2.x) {
+        if (gamepad2.x) {
             if (!xPressed) {
                 xPressed = true;
                 duckIn = !duckIn;
+                if (duckIn) {
+                    duckOut = false;
+                }
             }
         } else {
             xPressed = false;
         }
-
         if (gamepad2.y) {
             if (!yPressed) {
                 yPressed = true;
                 duckOut = !duckOut;
+                if (duckOut) {
+                    duckIn = false;
+                }
             }
         } else {
             yPressed = false;
@@ -230,21 +270,15 @@ public abstract class XDrive extends OpMode {
 
         if (duckIn) {
             duckWheel.setPosition(0.5 - (DUCK_SPEED * allianceColor.direction) / 2);
+        } else if (duckOut) {
+            duckWheel.setPosition(0.5 + (DUCK_SPEED * allianceColor.direction) / 2);
         } else {
             duckWheel.setPosition(0.5);
-        }*/
-        if(gamepad2.right_trigger > CONTROLLER_TOLERANCE) {
-            duckWheel.setPosition(.5+Math.pow(gamepad2.right_trigger,2)*.5);
-        } else if (gamepad2.left_trigger > CONTROLLER_TOLERANCE) {
-            duckWheel.setPosition(.5-Math.pow(gamepad2.left_trigger,2)*.5);
-        } else {
-            duckWheel.setPosition(.5);
         }
-        telemetry.addData("duckWheel", duckWheel.getPosition());
     }
 
     /**
-     * Controls the arm.
+     * Controls the arm lifter, extender, and the collection system.
      */
     private void arm() {
         if (Math.abs(gamepad2.left_stick_y) >= CONTROLLER_TOLERANCE) {
@@ -278,8 +312,9 @@ public abstract class XDrive extends OpMode {
         }
 
         // Auto stop for the bristles
-        bristlesIn = (!bristlesIn || !collectionTouch.getState()) && bristlesIn;
-        if (collectionTouch.getState()) {
+        collectionTouchState = collectionTouch.getState();
+        bristlesIn = (!bristlesIn || !collectionTouchState) && bristlesIn;
+        if (collectionTouchState) {
             telemetry.addData("Collection Touch", "Pressed");
         } else {
             telemetry.addData("Collection Touch", "Not Pressed");
@@ -337,9 +372,27 @@ public abstract class XDrive extends OpMode {
         }
     }
 
+    /*@RequiresApi(api = Build.VERSION_CODES.O)
     private void blockWeightDisplay() {
-
-    }
+        double weight = loadSensor.getWeight();
+        double distance = Math.abs(FreightType.NONE.weight - weight);
+        FreightType type = FreightType.NONE;
+        for(FreightType freightType : FreightType.values()) {
+            if (Math.abs(freightType.weight - weight) < distance) {
+                distance = Math.abs(freightType.weight - weight);
+                type = freightType;
+            }
+        }
+        if (type != currentFreightType) {
+            for (HT16K33 display : displays) {
+                display.clear();
+                display.drawCharacter(0, 0, type.name().charAt(0));
+                display.writeDisplay();
+            }
+            currentFreightType = type;
+        }
+        telemetry.addData("weight", weight);
+    }*/
 
     protected abstract AllianceColor getAllianceColor();
 }

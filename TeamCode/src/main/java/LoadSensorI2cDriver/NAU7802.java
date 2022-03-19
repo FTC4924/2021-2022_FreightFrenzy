@@ -125,8 +125,12 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
         byte[] readings;
         readings = burstRead(ADCO_B2, 3);
         long reading = readings[0] << 16;
-        reading |= Byte.toUnsignedInt(readings[1]) << 8;
+        reading |= (long) Byte.toUnsignedInt(readings[1]) << 8;
         return reading | Byte.toUnsignedInt(readings[2]);
+    }
+
+    public byte[] getRawReading() {
+        return burstRead(ADCO_B2, 3);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -137,7 +141,7 @@ public class NAU7802 extends I2cDeviceSynchDevice<I2cDeviceSynch> implements I2c
             total += getReading();
         }
 
-        return Math.round(total / SAMPLE_SIZE);
+        return (int) Math.round((double) total / SAMPLE_SIZE);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)

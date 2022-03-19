@@ -12,7 +12,7 @@ import androidx.annotation.RequiresApi;
 public class LoadSensorTest extends OpMode {
 
     NAU7802 loadSensor;
-    long reading;
+    byte[] readings;
     double weight;
 
     public void init() {
@@ -23,10 +23,13 @@ public class LoadSensorTest extends OpMode {
     public void loop() {
         telemetry.addData("Available", loadSensor.available());
         if(loadSensor.available()) {
-            reading = loadSensor.getReading();
-            weight = loadSensor.getWeight();
+            readings = loadSensor.getRawReading();
+            //weight = loadSensor.getWeight();
         }
-        telemetry.addData("Weight", weight);
-        telemetry.addData("Reading", reading);
+        //telemetry.addData("Weight", weight);
+        for(int i = 0; i < readings.length; i++) {
+            telemetry.addData("Reading" + i, readings[i]);
+        }
     }
+
 }
