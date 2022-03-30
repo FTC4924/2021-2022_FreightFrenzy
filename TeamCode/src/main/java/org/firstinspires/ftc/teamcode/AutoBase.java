@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.text.method.Touch;
-
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -26,7 +24,17 @@ import java.util.ArrayList;
 import LedDisplayI2cDriver.HT16K33;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS;
-import static org.firstinspires.ftc.teamcode.Constants.*;
+import static org.firstinspires.ftc.teamcode.Constants.ANGLE_ERROR_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Constants.AUTO_DUCK_SPEED;
+import static org.firstinspires.ftc.teamcode.Constants.AllianceColor;
+import static org.firstinspires.ftc.teamcode.Constants.BRISTLES_POWER_OUT;
+import static org.firstinspires.ftc.teamcode.Constants.BarcodePos;
+import static org.firstinspires.ftc.teamcode.Constants.ENCODER_POSITION_TOLERANCE;
+import static org.firstinspires.ftc.teamcode.Constants.RESOLUTION_HEIGHT;
+import static org.firstinspires.ftc.teamcode.Constants.RESOLUTION_WIDTH;
+import static org.firstinspires.ftc.teamcode.Constants.TICKS_PER_FOOT;
+import static org.firstinspires.ftc.teamcode.Constants.TURNING_ENCODER_POSITION_SCALAR;
+import static org.firstinspires.ftc.teamcode.Constants.TURNING_POWER_SCALAR;
 
 
 /**
@@ -460,6 +468,10 @@ public abstract class AutoBase extends OpMode {
         rightBackTargetPosition = rightBack.getCurrentPosition();
         rightFrontTargetPosition = rightFront.getCurrentPosition();
         leftBackTargetPosition = leftBack.getCurrentPosition();
+        leftFrontPower = 0;
+        leftBackPower = 0;
+        rightFrontPower = 0;
+        rightBackPower = 0;
     }
 
     /**
@@ -494,6 +506,7 @@ public abstract class AutoBase extends OpMode {
             currentCommands.remove(0);
             commandFirstLoop = true;
             stopWheelEncoders();
+            setWheelPowersAndPositions();
             resetStartTime();
         } else if (!upstreamCommands.isEmpty()) {
             currentCommands = upstreamCommands.get(0);

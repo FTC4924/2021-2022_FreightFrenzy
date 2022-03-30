@@ -76,6 +76,8 @@ public abstract class XDrive extends OpMode {
 
     HT16K33[] displays;
 
+    DigitalChannel duckWheelTouch;
+
     public void init() {
         allianceColor = getAllianceColor();
 
@@ -132,6 +134,9 @@ public abstract class XDrive extends OpMode {
             display.writeDisplay();
             display.displayOn();
         }
+
+        duckWheelTouch = hardwareMap.get(DigitalChannel.class, "duckWheelTouch");
+        duckWheelTouch.setMode(DigitalChannel.Mode.INPUT);
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -150,6 +155,8 @@ public abstract class XDrive extends OpMode {
         ledStripDisplay();
 
         //blockWeightDisplay();
+
+        telemetry.addData("duckWheelTouch", duckWheelTouch.getState());
     }
 
     /**

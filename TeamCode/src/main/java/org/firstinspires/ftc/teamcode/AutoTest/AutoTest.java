@@ -19,7 +19,7 @@ public class AutoTest extends AutoBase {
         return new ArrayList<Command>(
                 Arrays.asList(
                         //new DetectBarcodePosition(),\
-                        new Move(0.25, -90, 10)
+                        new Move(0.25, 90, 10)
                 )
         );
     }

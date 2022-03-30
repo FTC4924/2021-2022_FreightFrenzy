@@ -1,8 +1,8 @@
 package org.firstinspires.ftc.teamcode.Commands;
 
-import androidx.annotation.FloatRange;
-
 import org.firstinspires.ftc.teamcode.AutoBase;
+
+import androidx.annotation.FloatRange;
 
 public class Move extends Command {
     public Move(double distance, double angle, @FloatRange(from=0.0, to=1.0) double power) {
@@ -23,7 +23,7 @@ public class Move extends Command {
         this.distance = 100;
         this.duration = timeout;
         this.power = power;
-        this.angle = angle;
+        this.angle = Math.toRadians(angle);
         this.constructorID = 1;
     }
 }
