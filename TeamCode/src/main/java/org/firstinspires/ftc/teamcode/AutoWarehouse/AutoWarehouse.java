@@ -35,13 +35,13 @@ public abstract class AutoWarehouse extends AutoBase {
                         ),
                         new LoadBarcodeCommands(//Raises the arm to respective level
                                 new ArrayList<>(Arrays.asList(
-                                        new ArmRotate(.5)
+                                        new ArmRotate(.25)
                                 )),
                                 new ArrayList<>(Arrays.asList(
-                                        new ArmRotate(.75)
+                                        new ArmRotate(.625)
                                 )),
                                 new ArrayList<>(Arrays.asList(
-                                        new ArmRotate(.95)
+                                        new ArmRotate(1)
                                 ))
                         ),
                         new Move(1.65,0,.5),//Moves toward the alliance hub

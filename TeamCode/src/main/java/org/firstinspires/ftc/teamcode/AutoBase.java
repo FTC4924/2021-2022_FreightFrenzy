@@ -139,7 +139,7 @@ public abstract class AutoBase extends OpMode {
         armExtender.setPower(1);
 
         duckWheel = hardwareMap.get(Servo.class, "duckWheel");
-        bristleServo = hardwareMap.get(Servo.class, "bristleServo");
+        bristleServo = hardwareMap.get(Servo.class, "collection");
 
         armTouch = hardwareMap.get(DigitalChannel.class, "armTouch");
         armTouch.setMode(DigitalChannel.Mode.INPUT);

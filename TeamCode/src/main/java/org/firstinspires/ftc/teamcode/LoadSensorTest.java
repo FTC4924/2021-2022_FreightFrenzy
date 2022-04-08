@@ -16,6 +16,7 @@ public class LoadSensorTest extends OpMode {
     double weight;
 
     public void init() {
+        readings = new byte[]{0};
         loadSensor = hardwareMap.get(NAU7802.class, "loadSensor");
     }
 
@@ -24,9 +25,9 @@ public class LoadSensorTest extends OpMode {
         telemetry.addData("Available", loadSensor.available());
         if(loadSensor.available()) {
             readings = loadSensor.getRawReading();
-            //weight = loadSensor.getWeight();
+            weight = loadSensor.getWeight();
         }
-        //telemetry.addData("Weight", weight);
+        telemetry.addData("Weight", weight);
         for(int i = 0; i < readings.length; i++) {
             telemetry.addData("Reading" + i, readings[i]);
         }

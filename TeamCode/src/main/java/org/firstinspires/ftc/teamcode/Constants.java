@@ -88,12 +88,8 @@ public class Constants {
      * An enum for the type of freight its corresponding weight.
      */
     public enum FreightType {
-        NONE(-3.57e5),
-        DUCK(-3.63e5),
-        BALL(-3.70e5),
-        LIGHT(-3.80e5),
-        MEDIUM(-4.00e5),
-        HEAVY(-4.18e5);
+        NONE(1.3),
+        HEAVY(1.4);
 
         /**
          * The weight of the type of freight.
@@ -162,11 +158,23 @@ public class Constants {
     public static final Scalar YellowUpperBound = new Scalar(30, 255, 255);
     public static final int COLOR_CHANNEL = 2;
     public static final Size REGION_SIZE = new Size(335, 175);
+    public static final Rect ROI = new Rect(new Point(0,665), new Point(960,840));
     public static final Rect REGION_A = new Rect(new Point(0,665), REGION_SIZE);
     public static final Rect REGION_B = new Rect(new Point(625,665), REGION_SIZE);
     public static final int RESOLUTION_WIDTH = 1280;
     public static final int RESOLUTION_HEIGHT = 960;
     public static final int SHIPPING_ELEMENT_WIDTH = 15000;
     public static final String WEBCAM_RECORDING_FILE = "/Movies/match_recording.mp4";
+
+    public static final byte[][] endGame = new byte[][]{
+            {(byte) 0b11111111},
+            {(byte) 0b10000001},
+            {(byte) 0b10000001},
+            {(byte) 0b10000001},
+            {(byte) 0b10000001},
+            {(byte) 0b10000001},
+            {(byte) 0b10000001},
+            {(byte) 0b11111111}
+    };
 
 }
